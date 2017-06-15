@@ -26,7 +26,11 @@ def handle_keys():
 
 # Init console.
 tdl.set_font("dejavu10x10.png", greyscale=True, altLayout=True)
-console = tdl.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Umbrella", fullscreen=False)
+root = tdl.init(SCREEN_WIDTH,
+                SCREEN_HEIGHT,
+                title="Umbrella",
+                fullscreen=False)
+
 tdl.setFPS(LIMIT_FPS)
 
 # Set Player ti centre.
