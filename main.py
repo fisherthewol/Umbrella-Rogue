@@ -37,13 +37,13 @@ def handle_keys():
     elif user_input.key == "ESCAPE":
         return True  #exit game
     elif user_input.key == "UP":
-        playery -= 1
+        player.move(0, -1)
     elif user_input.key == "DOWN":
-        playery += 1
+        player.move(0, 1)
     elif user_input.key == "LEFT":
-        playerx -= 1
+        player.move(-1, 0)
     elif user_input.key == "RIGHT":
-        playerx += 1
+        playerx.move(1, 0)
 
 
 # Init consoles.
@@ -63,10 +63,12 @@ objects = [npc, player]
 
 # Main loop.
 while not tdl.event.is_window_closed():
-    con.draw_char(playerx, playery, '@', bg=None, fg=(255,255,255))
+    for obj in objects:
+        obj.draw()
     root.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
     tdl.flush()
-    con.draw_char(playerx, playery, ' ', bg=None)
+    for obj in objects:
+        obj.clear()
     #handle keys and exit game if needed
     exit_game = handle_keys()
     if exit_game:
