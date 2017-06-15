@@ -20,6 +20,15 @@ class Tile:
         self.block_sight = block_sight
 
 
+class Rect:
+    """Rectangle on map. Usually a Room."""
+    def __init__(self, x, y, w, h):
+        self.x1 = x
+        self.y1 = y
+        self.x2 = x + w
+        self.y2 = y + h
+
+
 class GameObject:
     """Generic Object."""
     def __init__(self, x, y, char, fg, bg):
@@ -62,11 +71,31 @@ def handle_keys():
         player.move(1, 0)
 
 
+def create_room(room):
+    global my_map
+    for x in range(room.x1 + 1, room.x2):
+        for y in range(room.y1 + 1, room.y2):
+            my_map[x][y].blocked = False
+            my_map[x][y].block_sight = False
+
+
+def create_h_tunnel(x1, x2, y):
+    global my_map
+    for x in range(min(x1, x2), max(x1, x2) + 1):
+        my_map[x][y].blocked = False
+        my_map[x][y].block_sight = False
+
+
 def make_map():
     global my_map
-    my_map = [[Tile(False)
+    my_map = [[Tile(True)
         for y in range(MAP_HEIGHT)]
             for x in range(MAP_WIDTH)]
+
+    room1 = Rect(20, 15, 10, 15)
+    room2 = Rect(50, 15, 10, 15)
+    create_room(room1)
+    create_room(room2)
 
 
 # Init consoles.
@@ -84,10 +113,6 @@ player = GameObject(SCREEN_WIDTH//2, SCREEN_HEIGHT//2, "@", (255,255,255), None)
 npc = GameObject(SCREEN_WIDTH//2 - 5, SCREEN_HEIGHT//2, "@", (255,255,0), None)
 objects = [npc, player]
 tmap = make_map()
-my_map[30][22].blocked = True
-my_map[30][22].block_sight = True
-my_map[50][22].blocked = True
-my_map[50][22].block_sight = True
 
 def render_all():
     for obj in objects:
@@ -101,6 +126,8 @@ def render_all():
                 con.draw_char(x, y, None, fg=None, bg=color_dark_ground)
     root.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
 
+player.x = 25
+player.y = 23
 # Main loop.
 while not tdl.event.is_window_closed():
     render_all()
