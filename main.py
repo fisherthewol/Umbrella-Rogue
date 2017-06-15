@@ -8,11 +8,12 @@ LIMIT_FPS = 30
 
 class GameObject:
     """Generic Object."""
-    def __init__(self, x, y, char, color):
+    def __init__(self, x, y, char, bg, fg):
         self.x = x
         self.y = y
         self.char = char
-        self.color = color
+        self.bg = bg
+        self.fg = fg
 
     def move(self, dx, dy):
         """Move by given values"""
@@ -21,11 +22,11 @@ class GameObject:
 
     def draw(self):
         """Draw character representing object."""
-        con.draw_char(self.x, self.y, self.char, self.char, self.color)
+        con.draw_char(self.x, self.y, self.char, self.bg, self.fg)
 
     def clear(self):
         """Remove  character representing object at previous position."""
-        con.draw_char(self)
+        con.draw_char(self.x, self.y, " ", self.bg, self.fg)
 
 
 def handle_keys():
@@ -43,7 +44,7 @@ def handle_keys():
     elif user_input.key == "LEFT":
         player.move(-1, 0)
     elif user_input.key == "RIGHT":
-        playerx.move(1, 0)
+        player.move(1, 0)
 
 
 # Init consoles.
@@ -57,8 +58,8 @@ root = tdl.init(SCREEN_WIDTH,
 tdl.setFPS(LIMIT_FPS)
 
 # Set Player to centre.
-player = GameObject(SCREEN_WIDTH//2, SCREEN_HEIGHT//2, "@", (255,255,255))
-npc = GameObject(SCREEN_WIDTH//2 - 5, SCREEN_HEIGHT//2, "@", (255,255,0))
+player = GameObject(SCREEN_WIDTH//2, SCREEN_HEIGHT//2, "@", None, (255,255,255))
+npc = GameObject(SCREEN_WIDTH//2 - 5, SCREEN_HEIGHT//2, "@", None, (255,255,0))
 objects = [npc, player]
 
 # Main loop.
@@ -69,7 +70,7 @@ while not tdl.event.is_window_closed():
     tdl.flush()
     for obj in objects:
         obj.clear()
-    #handle keys and exit game if needed
+    # Handle keys and exit game if needed.
     exit_game = handle_keys()
     if exit_game:
         break
