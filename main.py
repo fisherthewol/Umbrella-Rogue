@@ -7,7 +7,7 @@ MAP_WIDTH = 80
 MAP_HEIGHT = 45
 LIMIT_FPS = 30
 color_dark_wall = (0, 0, 100)
-color_dark_ground = (50, 50, 150)
+color_dark_ground = (8, 8, 68)
 
 
 class Tile:
@@ -22,7 +22,7 @@ class Tile:
 
 class GameObject:
     """Generic Object."""
-    def __init__(self, x, y, char, bg, fg):
+    def __init__(self, x, y, char, fg, bg):
         self.x = x
         self.y = y
         self.char = char
@@ -37,11 +37,11 @@ class GameObject:
 
     def draw(self):
         """Draw character representing object."""
-        con.draw_char(self.x, self.y, self.char, self.bg, self.fg)
+        con.draw_char(self.x, self.y, self.char, self.fg, self.bg)
 
     def clear(self):
         """Remove  character representing object at previous position."""
-        con.draw_char(self.x, self.y, " ", self.bg, self.fg)
+        con.draw_char(self.x, self.y, " ", self.fg, self.bg)
 
 
 def handle_keys():
