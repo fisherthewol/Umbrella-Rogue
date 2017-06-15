@@ -10,7 +10,7 @@ def handle_keys():
     """Handles user key input."""
     global playerx, playery
     user_input = tdl.event.key_wait()
-    if user_input.key == "ENTER" and user_input.alt:
+    if user_input.key == "ENTER" and user_input.control:
         tdl.set_fullscreen(not tdl.get_fullscreen())
     elif user_input.key == "ESCAPE":
         return True  #exit game
@@ -33,7 +33,7 @@ root = tdl.init(SCREEN_WIDTH,
 
 tdl.setFPS(LIMIT_FPS)
 
-# Set Player ti centre.
+# Set Player to centre.
 playerx = SCREEN_WIDTH//2
 playery = SCREEN_HEIGHT//2
 
