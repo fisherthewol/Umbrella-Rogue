@@ -19,23 +19,22 @@ def handle_keys():
         if event.type == 'KEYDOWN':
             user_input = event
             keypress = True
-    if not keypress:
-        return
-
-    if user_input.key == 'ENTER' and user_input.alt:
-        #Alt+Enter: toggle fullscreen
-        tdl.set_fullscreen(not tdl.get_fullscreen())
-    elif user_input.key == 'ESCAPE':
-        return True  #exit game
-    # Movement
-    if user_input.key == 'UP':
-        playery -= 1
-    elif user_input.key == 'DOWN':
-        playery += 1
-    elif user_input.key == 'LEFT':
-        playerx -= 1
-    elif user_input.key == 'RIGHT':
-        playerx += 1
+        elif not keypress:
+            return
+        elif user_input.key == 'ENTER' and user_input.alt:
+            #Alt+Enter: toggle fullscreen
+            tdl.set_fullscreen(not tdl.get_fullscreen())
+        elif user_input.key == 'ESCAPE':
+            return True  #exit game
+        # Movement
+        elif user_input.key == 'UP':
+            playery -= 1
+        elif user_input.key == 'DOWN':
+            playery += 1
+        elif user_input.key == 'LEFT':
+            playerx -= 1
+        elif user_input.key == 'RIGHT':
+            playerx += 1
 
 
 while not tdl.event.is_window_closed():
