@@ -3,6 +3,8 @@ __version__ = 1.02
 # Set Window.
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
+MAP_WIDTH = 80
+MAP_HEIGHT = 45
 LIMIT_FPS = 30
 
 
@@ -58,8 +60,8 @@ root = tdl.init(SCREEN_WIDTH,
 tdl.setFPS(LIMIT_FPS)
 
 # Set Player to centre.
-player = GameObject(SCREEN_WIDTH//2, SCREEN_HEIGHT//2, "@", None, (255,255,255))
-npc = GameObject(SCREEN_WIDTH//2 - 5, SCREEN_HEIGHT//2, "@", None, (255,255,0))
+player = GameObject(SCREEN_WIDTH//2, SCREEN_HEIGHT//2, "@", (255,255,255), None)
+npc = GameObject(SCREEN_WIDTH//2 - 5, SCREEN_HEIGHT//2, "@", (255,255,0), None)
 objects = [npc, player]
 
 # Main loop.
