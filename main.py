@@ -84,7 +84,7 @@ def create_h_tunnel(x1, x2, y):
 
 def create_v_tunnel(y1, y2, x):
     global my_map
-    for x in range(min(y1, y2), max(y1, y2) + 1):
+    for y in range(min(y1, y2), max(y1, y2) + 1):
         my_map[x][y].blocked = False
         my_map[x][y].block_sight = False
 
