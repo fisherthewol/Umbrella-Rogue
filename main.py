@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import tdl
 from random import randint
 import colors
@@ -54,16 +55,18 @@ class Rect:
 
 class GameObject:
     """Generic Object."""
-    def __init__(self, x, y, char, fg, bg):
+    def __init__(self, x, y, char, name, fg, bg, blocks = False):
         self.x = x
         self.y = y
         self.char = char
+        self.name = name
         self.fg = fg
         self.bg = bg
+        self.blocks = blocks
 
     def move(self, dx, dy):
         """Move by given values"""
-        if not my_map[self.x + dx][self.y + dy].blocked:
+        if not is_blocked(self.x + dx, self.y + dy):
             self.x += dx
             self.y += dy
 
@@ -76,6 +79,15 @@ class GameObject:
     def clear(self):
         """Remove  character representing object at previous position."""
         con.draw_char(self.x, self.y, " ", self.fg, self.bg)
+
+
+def is_blocked(x, y):
+    if my_map[x][y].blocked:
+        return True
+    for obj in objects:
+        if obj.blocks and obj.x == x and obj.y == y:
+            return True
+    return False
 
 
 def create_room(room):
@@ -158,15 +170,15 @@ def make_map():
 
 def place_objects(room):
     num_monsters = randint(0, MAX_ROOM_MONSTERS)
-    for i in range(0, MAX_ROOM_MONSTERS):
+    for i in range(0, num_monsters):
         x = randint(room.x1, room.x2)
         y = randint(room.y1, room.y2)
-        if randint(0, 100) < 80:
-            monster = GameObject(x, y, "o", colors.desaturated_green, None)
-        else:
-            monster = GameObject(x, y, "T", colors.darker_green, None)
-
-        objects.append(monster)
+        if not is_blocked(x, y):
+            if randint(0, 100) < 80:
+                monster = GameObject(x, y, "o", "orc", colors.desaturated_green, None)
+            else:
+                monster = GameObject(x, y, "T", "troll", colors.darker_green, None)
+            objects.append(monster)
 
 
 def render_all():
@@ -206,6 +218,23 @@ def render_all():
     root.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
 
 
+def playermoa(dx, dy):
+    global fov_recompute
+    x = player.x + dx
+    y = player.y + dy
+    target = None
+    for obj in objects:
+        if obj.x == x and obj.y == y:
+            target = obj
+            break
+
+    if target is not None:
+        print("The {} laughs at your puny efforts to attack him!".format(target.name))
+    else:
+        player.move(dx, dy)
+        fov_recompute = True
+
+
 def handle_keys():
     """Handles user key input. Currently set for turn-based."""
     global playerx, playery
@@ -214,19 +243,22 @@ def handle_keys():
     if user_input.key == "ENTER" and user_input.control:
         tdl.set_fullscreen(not tdl.get_fullscreen())
     elif user_input.key == "ESCAPE":
-        return True  #exit game
-    elif user_input.key == "UP":
-        player.move(0, -1)
-        fov_recompute = True
-    elif user_input.key == "DOWN":
-        player.move(0, 1)
-        fov_recompute = True
-    elif user_input.key == "LEFT":
-        player.move(-1, 0)
-        fov_recompute = True
-    elif user_input.key == "RIGHT":
-        player.move(1, 0)
-        fov_recompute = True
+        return "exit"  #exit game
+    elif game_state == "playing":
+        if user_input.key == "UP":
+            playermoa(0, -1)
+            fov_recompute = True
+        elif user_input.key == "DOWN":
+            playermoa(0, 1)
+            fov_recompute = True
+        elif user_input.key == "LEFT":
+            playermoa(-1, 0)
+            fov_recompute = True
+        elif user_input.key == "RIGHT":
+            playermoa(1, 0)
+            fov_recompute = True
+        else:
+            return "didnt-take-turn"
 
 
 # Init consoles.
@@ -239,13 +271,15 @@ con = tdl.Console(SCREEN_WIDTH, SCREEN_HEIGHT)
 tdl.setFPS(LIMIT_FPS)
 
 # Objects.
-player = GameObject(SCREEN_WIDTH//2, SCREEN_HEIGHT//2, "@", (255,255,255), None)
+player = GameObject(0, 0, "@", "player", colors.white, None)
 objects = [player]
 
 # Generate map and set FOV.
 tmap = make_map()
 global fov_recompute
 fov_recompute = True
+game_state = "playing"
+player_action = None
 
 # Main loop.
 while not tdl.event.is_window_closed():
@@ -254,6 +288,10 @@ while not tdl.event.is_window_closed():
     for obj in objects:
         obj.clear()
     # Handle keys and exit game if needed.
-    exit_game = handle_keys()
-    if exit_game:
+    player_action = handle_keys()
+    if player_action == "exit":
         break
+    elif game_state == "playing" and player_action == "didnt-take-turn":
+        for obj in objects:
+            if obj != player:
+                print("The {} growls!".format(obj.name))
