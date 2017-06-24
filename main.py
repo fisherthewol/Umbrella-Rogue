@@ -1,5 +1,6 @@
 import tdl
 from random import randint
+import colors
 __version__ = 1.04
 # Set Window
 SCREEN_WIDTH = 80
@@ -11,6 +12,7 @@ MAP_HEIGHT = 45
 ROOM_MAX_SIZE = 10
 ROOM_MIN_SIZE = 6
 MAX_ROOMS = 30
+MAX_ROOM_MONSTERS = 3
 # FOV Settings.
 FOV_ALGO = "BASIC"
 FOV_LIGHT_WALLS = True
@@ -20,6 +22,7 @@ color_dark_wall = (0, 0, 100)
 color_light_wall = (130, 110, 50)
 color_dark_ground = (50, 50, 150)
 color_light_ground = (200, 180, 50)
+
 
 class Tile:
     """Map tile object."""
@@ -148,9 +151,22 @@ def make_map():
                 else:
                     create_v_tunnel(prev_y, new_y, prev_x)
                     create_h_tunnel(prev_x, new_x, new_y)
-
+            place_objects(new_room)
             rooms.append(new_room)
             num_rooms += 1
+
+
+def place_objects(room):
+    num_monsters = randint(0, MAX_ROOM_MONSTERS)
+    for i in range(0, MAX_ROOM_MONSTERS):
+        x = randint(room.x1, room.x2)
+        y = randint(room.y1, room.y2)
+        if randint(0, 100) < 80:
+            monster = GameObject(x, y, "o", colors.desaturated_green, None)
+        else:
+            monster = GameObject(x, y, "T", colors.darker_green, None)
+
+        objects.append(monster)
 
 
 def render_all():
@@ -224,8 +240,7 @@ tdl.setFPS(LIMIT_FPS)
 
 # Objects.
 player = GameObject(SCREEN_WIDTH//2, SCREEN_HEIGHT//2, "@", (255,255,255), None)
-npc = GameObject(SCREEN_WIDTH//2 - 5, SCREEN_HEIGHT//2, "@", (255,255,0), None)
-objects = [npc, player]
+objects = [player]
 
 # Generate map and set FOV.
 tmap = make_map()
