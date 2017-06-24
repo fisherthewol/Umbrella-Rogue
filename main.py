@@ -177,15 +177,13 @@ root = tdl.init(SCREEN_WIDTH,
 con = tdl.Console(SCREEN_WIDTH, SCREEN_HEIGHT)
 tdl.setFPS(LIMIT_FPS)
 
+# Objects.
 player = GameObject(SCREEN_WIDTH//2, SCREEN_HEIGHT//2, "@", (255,255,255), None)
 npc = GameObject(SCREEN_WIDTH//2 - 5, SCREEN_HEIGHT//2, "@", (255,255,0), None)
-
-# Game Objects.
 objects = [npc, player]
 
 # Generate map.
 tmap = make_map()
-
 
 # Main loop.
 while not tdl.event.is_window_closed():
