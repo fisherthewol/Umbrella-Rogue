@@ -82,6 +82,7 @@ class GameObject:
 
 
 def is_blocked(x, y):
+    """Checks if object/tile is blocking."""
     if my_map[x][y].blocked:
         return True
     for obj in objects:
@@ -91,6 +92,7 @@ def is_blocked(x, y):
 
 
 def create_room(room):
+    """Creates room on map."""
     global my_map
     for x in range(room.x1 + 1, room.x2):
         for y in range(room.y1 + 1, room.y2):
@@ -99,6 +101,7 @@ def create_room(room):
 
 
 def create_h_tunnel(x1, x2, y):
+    """Draw horizontal tunnel."""
     global my_map
     for x in range(min(x1, x2), max(x1, x2) + 1):
         my_map[x][y].blocked = False
@@ -106,6 +109,7 @@ def create_h_tunnel(x1, x2, y):
 
 
 def create_v_tunnel(y1, y2, x):
+    """Draw vertical tunnel."""
     global my_map
     for y in range(min(y1, y2), max(y1, y2) + 1):
         my_map[x][y].blocked = False
@@ -113,6 +117,7 @@ def create_v_tunnel(y1, y2, x):
 
 
 def is_visible_tile(x, y):
+    """Check if tile can be seen."""
     global my_map
     if x >= MAP_WIDTH or x < 0:
         return False
@@ -125,6 +130,7 @@ def is_visible_tile(x, y):
 
 
 def make_map():
+    """Draw the map."""
     global my_map
     my_map = [[Tile(True)
         for y in range(MAP_HEIGHT)]
@@ -169,6 +175,7 @@ def make_map():
 
 
 def place_objects(room):
+    """Add objects to room."""
     num_monsters = randint(0, MAX_ROOM_MONSTERS)
     for i in range(0, num_monsters):
         x = randint(room.x1, room.x2)
@@ -182,6 +189,7 @@ def place_objects(room):
 
 
 def render_all():
+    """'Render' objects onto map."""
     global fov_recompute
     global visible_tiles
     if fov_recompute:
@@ -219,6 +227,7 @@ def render_all():
 
 
 def playermoa(dx, dy):
+    """Player movement/attacking."""
     global fov_recompute
     x = player.x + dx
     y = player.y + dy
@@ -270,7 +279,7 @@ root = tdl.init(SCREEN_WIDTH,
 con = tdl.Console(SCREEN_WIDTH, SCREEN_HEIGHT)
 tdl.setFPS(LIMIT_FPS)
 
-# Objects.
+# Init player.
 player = GameObject(0, 0, "@", "player", colors.white, None)
 objects = [player]
 
