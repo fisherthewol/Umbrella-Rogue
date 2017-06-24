@@ -102,8 +102,8 @@ def make_map():
     for r in range(MAX_ROOMS):
         w = randint(ROOM_MIN_SIZE, ROOM_MAX_SIZE)
         h = randint(ROOM_MIN_SIZE, ROOM_MAX_SIZE)
-        x = randint(0, MAP_WIDTH-w-1)
-        y = randint(0, MAP_HEIGHT-h-1)
+        x = randint(0, MAP_WIDTH - w - 1)
+        y = randint(0, MAP_HEIGHT - h - 1)
 
         new_room = Rect(x, y, w, h)
 
@@ -126,7 +126,7 @@ def make_map():
 
                 if randint(0, 1):
                     create_h_tunnel(prev_x, new_x, prev_y)
-                    create_v_tunnel(prev_x, new_x, new_y)
+                    create_v_tunnel(prev_y, new_y, new_x)
                 else:
                     create_v_tunnel(prev_y, new_y, prev_x)
                     create_h_tunnel(prev_x, new_x, new_y)
