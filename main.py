@@ -153,8 +153,7 @@ class BasicMonster:
             if monster.distance_to(player) >= 2:
                 monster.move_towards(player.x, player.y)
             elif player.fighter.hp > 0:
-                print("The attack of the {} bounces off your shiny metal armor!"
-                      .format(monster.name))
+                monster.fighter.attack(player)
 
 
 def is_blocked(x, y):
@@ -305,7 +304,8 @@ def render_all():
     #blit the contents of "con" to the root console and present it
     root.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
 
-    con.draw_str(1, SCREEN_HEIGHT - 2, "HP: {}/{}".format(player.fighter.hp))
+    con.draw_str(1, SCREEN_HEIGHT - 2, "HP: " + str(player.fighter.hp) + "/" +
+                 str(player.fighter.max_hp) + " ")
 
 
 def player_move_or_attack(dx, dy):
@@ -319,8 +319,7 @@ def player_move_or_attack(dx, dy):
             break
 
     if target is not None:
-        print("The {} laughs at your puny efforts to attack him!"
-              .format(target.name))
+        player.fighter.attack(target)
     else:
         player.move(dx, dy)
         fov_recompute = True
