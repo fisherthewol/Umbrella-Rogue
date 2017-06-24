@@ -28,6 +28,7 @@ class Tile:
         if block_sight is None:
             block_sight = blocked
         self.block_sight = block_sight
+        self.explored = False
 
 
 class Rect:
@@ -167,15 +168,21 @@ def render_all():
                 visible = (x, y) in visible_tiles
                 wall = my_map[x][y].block_sight
                 if not visible:
-                    if wall:
-                        con.draw_char(x, y, None, fg=None, bg=color_dark_wall)
-                    else:
-                        con.draw_char(x, y, None, fg=None, bg=color_dark_ground)
+                    if my_map[x][y].explored:
+                        if wall:
+                            con.draw_char(x, y, None, fg=None,
+                                          bg=color_dark_wall)
+                        else:
+                            con.draw_char(x, y, None, fg=None,
+                                          bg=color_dark_ground)
                 else:
                     if wall:
-                        con.draw_char(x, y, None, fg=None, bg=color_light_wall)
+                        con.draw_char(x, y, None, fg=None,
+                                      bg=color_light_wall)
                     else:
-                        con.draw_char(x, y, None, fg=None, bg=color_light_ground)
+                        con.draw_char(x, y, None, fg=None,
+                                      bg=color_light_ground)
+                    my_map[x][y].explored = True
 
     for obj in objects:
         obj.draw()
