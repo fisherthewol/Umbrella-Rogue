@@ -105,19 +105,31 @@ class GameObject:
         """Clear obj from screen."""
         con.draw_char(self.x, self.y, " ", self.fg, bg=None)
 
+    def send_to_back(self):
+        """Stop this object drawing over others."""
+        global objects
+        objects.remove(self)
+        objects.insert(0, self)
+
 
 class Fighter:
     """Combat Properties for Objects."""
-    def __init__(self, hp, defense, power):
+    def __init__(self, hp, defense, power, death_function=None):
         self.max_hp = hp
         self.hp = hp
         self.defense = defense
         self.power = power
+        self.death_function = death_function
 
     def take_damage(self, damage):
         """Reduce HP by damage dealt."""
         if damage > 0:
             self.hp -= damage
+
+        if self.hp <= 0:
+            func = self.death_function
+            if func is not None:
+                func(self.owner)
 
     def attack(self, target):
         """Deal Damage to target."""
@@ -239,13 +251,19 @@ def place_objects(room):
         y = randint(room.y1, room.y2)
         if not is_blocked(x, y):
             if randint(0, 100) < 80:
-                fighter_component = Fighter(hp=10, defense=0, power=3)
+                fighter_component = Fighter(hp=10,
+                                            defense=0,
+                                            power=3,
+                                            death_function=monster_death)
                 ai_component = BasicMonster()
                 monster = GameObject(x, y, "o", "orc", colors.desaturated_green,
                                      blocks=True, fighter=fighter_component,
                                      ai=ai_component)
             else:
-                fighter_component = Fighter(hp=16, defense=1, power=4)
+                fighter_component = Fighter(hp=16,
+                                            defense=1,
+                                            power=4,
+                                            death_function=monster_death)
                 ai_component = BasicMonster()
                 monster = GameObject(x, y, "T", "troll", colors.darker_green,
                                      blocks=True, fighter=fighter_component,
@@ -280,7 +298,9 @@ def render_all():
                         con.draw_char(x, y, None, fg=None, bg=color_light_ground)
                     my_map[x][y].explored = True
     for obj in objects:
-        obj.draw()
+        if obj != player:
+            obj.draw()
+    player.draw()
 
     #blit the contents of "con" to the root console and present it
     root.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
@@ -294,7 +314,7 @@ def player_move_or_attack(dx, dy):
     y = player.y + dy
     target = None
     for obj in objects:
-        if obj.x == x and obj.y == y:
+        if obj.fighter and obj.x == x and obj.y == y:
             target = obj
             break
 
@@ -336,6 +356,25 @@ def handle_keys():
             player_move_or_attack(1, 0)
         else:
             return "didnt-take-turn"
+
+
+def player_death(player):
+    global game_state
+    game_state = "dead"
+    print("You died!")
+    player.char = "%"
+    player.fg = colors.dark_red
+
+
+def monster_death(monster):
+    print("{} is dead!".format(monster.name.capitalize()))
+    monster.char = "%"
+    monster.fg = colors.dark_red
+    monster.blocks = False
+    monster.fighter = None
+    monster.ai = None
+    monster.name = "Remains of {}".format(monster.name)
+    monster.send_to_back()
 
 
 tdl.set_font("dejavu10x10.png", greyscale=True, altLayout=True)
