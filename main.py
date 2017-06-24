@@ -114,6 +114,24 @@ class Fighter:
         self.defense = defense
         self.power = power
 
+    def take_damage(self, damage):
+        """Reduce HP by damage dealt."""
+        if damage > 0:
+            self.hp -= damage
+
+    def attack(self, target):
+        """Deal Damage to target."""
+        damage = self.power - target.fighter.defense
+        parentname = self.owner.name.capitalize()
+        if damage > 0:
+            print("{} attacks {} for {} hp.".format(parentname,
+                                                    target.name,
+                                                    damage))
+            target.fighter.take_damage(damage)
+        else:
+            print("{} attacks {}, but it has no effect!".format(parentname,
+                                                                target.name))
+
 
 class BasicMonster:
     """Basic Monster AI"""
@@ -266,6 +284,8 @@ def render_all():
 
     #blit the contents of "con" to the root console and present it
     root.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
+
+    con.draw_str(1, SCREEN_HEIGHT - 2, "HP: {}/{}".format(player.fighter.hp))
 
 
 def player_move_or_attack(dx, dy):
