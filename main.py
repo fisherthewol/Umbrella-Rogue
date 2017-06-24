@@ -11,15 +11,20 @@ MAP_HEIGHT = 45
 ROOM_MAX_SIZE = 10
 ROOM_MIN_SIZE = 6
 MAX_ROOMS = 30
+# FOV Settings.
+FOV_ALGO = "BASIC"
+FOV_LIGHT_WALLS = True
+TORCH_RADIUS = 10
 # Set tiles colours.
 color_dark_wall = (0, 0, 100)
-color_dark_ground = (5, 66, 22)
+color_light_wall = (130, 110, 50)
+color_dark_ground = (50, 50, 150)
+color_light_ground = (200, 180, 50)
 
 class Tile:
     """Map tile object."""
     def __init__(self, blocked, block_sight = None):
         self.blocked = blocked
-
         if block_sight is None:
             block_sight = blocked
         self.block_sight = block_sight
@@ -49,8 +54,8 @@ class GameObject:
         self.x = x
         self.y = y
         self.char = char
-        self.bg = bg
         self.fg = fg
+        self.bg = bg
 
     def move(self, dx, dy):
         """Move by given values"""
@@ -60,7 +65,9 @@ class GameObject:
 
     def draw(self):
         """Draw character representing object."""
-        con.draw_char(self.x, self.y, self.char, self.fg, self.bg)
+        global visible_tiles
+        if (self.x, self.y) in visible_tiles:
+            con.draw_char(self.x, self.y, self.char, self.fg, self.bg)
 
     def clear(self):
         """Remove  character representing object at previous position."""
@@ -89,16 +96,26 @@ def create_v_tunnel(y1, y2, x):
         my_map[x][y].block_sight = False
 
 
+def is_visible_tile(x, y):
+    global my_map
+    if x >= MAP_WIDTH or x < 0:
+        return False
+    elif y >= MAP_HEIGHT or y <0:
+        return False
+    elif my_map[x][y].blocked == True:
+        return False
+    else:
+        return True
+
+
 def make_map():
     global my_map
-
     my_map = [[Tile(True)
         for y in range(MAP_HEIGHT)]
             for x in range(MAP_WIDTH)]
-
+    # Dungeon generator.
     rooms = []
     num_rooms = 0
-
     for r in range(MAX_ROOMS):
         w = randint(ROOM_MIN_SIZE, ROOM_MAX_SIZE)
         h = randint(ROOM_MIN_SIZE, ROOM_MAX_SIZE)
@@ -136,23 +153,40 @@ def make_map():
 
 
 def render_all():
+    global fov_recompute
+    global visible_tiles
+    if fov_recompute:
+        fov_recompute = False
+        visible_tiles = tdl.map.quickFOV(player.x, player.y,
+                                         is_visible_tile,
+                                         fov=FOV_ALGO,
+                                         radius=TORCH_RADIUS,
+                                         lightWalls=FOV_LIGHT_WALLS)
+        for y in range(MAP_HEIGHT):
+            for x in range(MAP_WIDTH):
+                visible = (x, y) in visible_tiles
+                wall = my_map[x][y].block_sight
+                if not visible:
+                    if wall:
+                        con.draw_char(x, y, None, fg=None, bg=color_dark_wall)
+                    else:
+                        con.draw_char(x, y, None, fg=None, bg=color_dark_ground)
+                else:
+                    if wall:
+                        con.draw_char(x, y, None, fg=None, bg=color_light_wall)
+                    else:
+                        con.draw_char(x, y, None, fg=None, bg=color_light_ground)
 
     for obj in objects:
         obj.draw()
 
-    for y in range(MAP_HEIGHT):
-        for x in range(MAP_WIDTH):
-            wall = my_map[x][y].block_sight
-            if wall:
-                con.draw_char(x, y, None, fg=None, bg=color_dark_wall)
-            else:
-                con.draw_char(x, y, None, fg=None, bg=color_dark_ground)
     root.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
 
 
 def handle_keys():
     """Handles user key input. Currently set for turn-based."""
     global playerx, playery
+    global fov_recompute
     user_input = tdl.event.key_wait()
     if user_input.key == "ENTER" and user_input.control:
         tdl.set_fullscreen(not tdl.get_fullscreen())
@@ -160,12 +194,16 @@ def handle_keys():
         return True  #exit game
     elif user_input.key == "UP":
         player.move(0, -1)
+        fov_recompute = True
     elif user_input.key == "DOWN":
         player.move(0, 1)
+        fov_recompute = True
     elif user_input.key == "LEFT":
         player.move(-1, 0)
+        fov_recompute = True
     elif user_input.key == "RIGHT":
         player.move(1, 0)
+        fov_recompute = True
 
 
 # Init consoles.
@@ -182,8 +220,10 @@ player = GameObject(SCREEN_WIDTH//2, SCREEN_HEIGHT//2, "@", (255,255,255), None)
 npc = GameObject(SCREEN_WIDTH//2 - 5, SCREEN_HEIGHT//2, "@", (255,255,0), None)
 objects = [npc, player]
 
-# Generate map.
+# Generate map and set FOV.
 tmap = make_map()
+global fov_recompute
+fov_recompute = True
 
 # Main loop.
 while not tdl.event.is_window_closed():
