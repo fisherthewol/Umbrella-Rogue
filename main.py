@@ -144,13 +144,15 @@ class Fighter:
         damage = self.power - target.fighter.defense
         parentname = self.owner.name.capitalize()
         if damage > 0:
-            print("{} attacks {} for {} hp.".format(parentname,
+            message("{} attacks {} for {} hp.".format(parentname,
                                                     target.name,
-                                                    damage))
+                                                    damage),
+                    colors.flame)
             target.fighter.take_damage(damage)
         else:
-            print("{} attacks {}, but it has no effect!".format(parentname,
-                                                                target.name))
+            message("{} attacks {}, but it has no effect!".format(parentname,
+                                                                target.name),
+                    colors.flame)
 
 
 class BasicMonster:
@@ -395,13 +397,13 @@ def handle_keys():
 def player_death(player):
     global game_state
     game_state = "dead"
-    print("You died!")
+    message("You died!", colors.darker_red)
     player.char = "%"
     player.fg = colors.dark_red
 
 
 def monster_death(monster):
-    print("{} is dead!".format(monster.name.capitalize()))
+    message("{} is dead!".format(monster.name.capitalize()), colors.azure)
     monster.char = "%"
     monster.fg = colors.dark_red
     monster.blocks = False
