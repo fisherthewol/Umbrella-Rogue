@@ -290,6 +290,15 @@ def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
     panel.draw_str(x_centered, y, text, fg=colors.white, bg=None)
 
 
+def get_names_under_mouse():
+    global visible_tiles
+    (x, y) = mouse_coord
+    names = [obj.name for obj in objects if obj.x == x and obj.y == y and
+             (obj.x, obj.y) in visible_tiles]
+    names = ", ".join(names)
+    return names.capitalize()
+
+
 def render_all():
     global fov_recompute
     global visible_tiles
@@ -333,6 +342,9 @@ def render_all():
 
     render_bar(1, 1, BAR_WIDTH, "HP", player.fighter.hp, player.fighter.max_hp,
                colors.light_red, colors.darker_red)
+
+    panel.draw_str(1, 0, get_names_under_mouse(), bg=None, fg=colors.orange)
+
     root.blit(panel, 0, PANEL_Y, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0)
 
 
@@ -365,16 +377,14 @@ def player_move_or_attack(dx, dy):
 def handle_keys():
     global playerx, playery
     global fov_recompute
-    if REALTIME:
-        keypress = False
-        for event in tdl.event.get():
-            if event.type == "KEYDOWN":
-               user_input = event
-               keypress = True
-        if not keypress:
-            return
-    else:
-        user_input = tdl.event.key_wait()
+    keypress = False
+    for event in tdl.event.get():
+        if event.type == "KEYDOWN":
+            user_input = event
+        if event.type == "MOUSEMOTION":
+            mouse_coord = event.cell
+    if not keypress:
+        return "didnt-take-turn"
 
     if user_input.key == "ENTER" and user_input.control:
         tdl.set_fullscreen(not tdl.get_fullscreen())
@@ -436,7 +446,8 @@ player_action = None
 # Message components.
 game_msgs = []
 
-message("Welcome. This is a hell you can't escape", colors.red)
+message("Welcome. This is a hell you can't escape.", colors.red)
+mouse_coord = (0, 0)
 # Main Loop.
 while not tdl.event.is_window_closed():
     render_all()
