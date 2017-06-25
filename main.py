@@ -3,6 +3,7 @@ import tdl
 from random import randint
 import colors
 import math
+import textwrap
 
 # Game Constants.
 SCREEN_WIDTH = 80
@@ -15,6 +16,9 @@ LIMIT_FPS = 30
 BAR_WIDTH = 20
 PANEL_HEIGHT = 7
 PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
+MSG_X = BAR_WIDTH + 2
+MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
+MSG_HEIGHT = PANEL_HEIGHT - 1
 # Dungeon Gen.
 ROOM_MAX_SIZE = 10
 ROOM_MIN_SIZE = 6
@@ -316,13 +320,27 @@ def render_all():
     player.draw()
 
     # Blit the contents of "con" to the root console and present it.
-    root.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
+    root.blit(con, 0, 0, MAP_WIDTH, MAP_HEIGHT, 0, 0)
 
     # Draw gui panel.
     panel.clear(fg=colors.white, bg=colors.black)
+    y = 1
+    for (line, color) in game_msgs:
+        panel.draw_str(MSG_X, y, line, bg=None, fg=color)
+        y += 1
+
     render_bar(1, 1, BAR_WIDTH, "HP", player.fighter.hp, player.fighter.max_hp,
                colors.light_red, colors.darker_red)
     root.blit(panel, 0, PANEL_Y, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0)
+
+
+def message(new_msg, color = colors.white):
+    """Func for displaying message to GUI."""
+    new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
+    for line in new_msg_lines:
+        if len(game_msgs) == MSG_HEIGHT:
+            del game_msgs[0]
+        game_msgs.append((line, color))
 
 
 def player_move_or_attack(dx, dy):
@@ -396,7 +414,7 @@ def monster_death(monster):
 tdl.set_font("dejavu10x10.png", greyscale=True, altLayout=True)
 root = tdl.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Umbrella", fullscreen=False)
 tdl.setFPS(LIMIT_FPS)
-con = tdl.Console(SCREEN_WIDTH, SCREEN_HEIGHT)
+con = tdl.Console(MAP_WIDTH, MAP_HEIGHT)
 panel = tdl.Console(SCREEN_WIDTH, PANEL_HEIGHT)
 
 fighter_component = Fighter(hp=30, defense=2, power=5,
@@ -413,6 +431,10 @@ fov_recompute = True
 game_state = "playing"
 player_action = None
 
+# Message components.
+game_msgs = []
+
+message("Welcome. This is a hell you can't escape", colors.red)
 # Main Loop.
 while not tdl.event.is_window_closed():
     render_all()
