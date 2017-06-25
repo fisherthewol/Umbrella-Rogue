@@ -399,8 +399,11 @@ tdl.setFPS(LIMIT_FPS)
 con = tdl.Console(SCREEN_WIDTH, SCREEN_HEIGHT)
 panel = tdl.Console(SCREEN_WIDTH, PANEL_HEIGHT)
 
-fighter_component = Fighter(hp=30, defense=2, power=5)
-player = GameObject(0, 0, "@", "player", colors.white, None, blocks=True, fighter=fighter_component)
+fighter_component = Fighter(hp=30, defense=2, power=5,
+                            death_function=player_death)
+player = GameObject(0, 0, "@", "player",
+                    colors.white, None, blocks=True,
+                    fighter=fighter_component)
 
 objects = [player]
 
