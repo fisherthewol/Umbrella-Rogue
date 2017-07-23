@@ -36,7 +36,7 @@ color_light_ground = (200, 180, 50)
 
 
 class Tile:
-    """Map tile base class."""
+    """Map tile class."""
     def __init__(self, blocked, block_sight=None):
         self.blocked = blocked
         self.explored = False
@@ -59,7 +59,7 @@ class Rect:
         return (center_x, center_y)
 
     def intersect(self, other):
-        """If current Rect intersects with other, True."""
+        """Returns True if self intersects with other."""
         return (self.x1 <= other.x2 and self.x2 >= other.x1 and
                 self.y1 <= other.y2 and self.y2 >= other.y1)
 
@@ -134,10 +134,10 @@ class Fighter:
         if damage > 0:
             self.hp -= damage
 
-        if self.hp <= 0:
-            func = self.death_function
-            if func is not None:
-                func(self.owner)
+            if self.hp <= 0:
+                func = self.death_function
+                if func is not None:
+                    func(self.owner)
 
     def attack(self, target):
         """Deal Damage to target."""
@@ -147,12 +147,12 @@ class Fighter:
             message("{} attacks {} for {} hp.".format(parentname,
                                                     target.name,
                                                     damage),
-                    colors.flame)
+                                                    colors.flame)
             target.fighter.take_damage(damage)
         else:
             message("{} attacks {}, but it has no effect!".format(parentname,
                                                                 target.name),
-                    colors.flame)
+                                                                colors.flame)
 
 
 class BasicMonster:
@@ -185,6 +185,7 @@ def create_room(room):
 
 
 def create_h_tunnel(x1, x2, y):
+    """Create horizontal Tunnel"""
     global my_map
     for x in range(min(x1, x2), max(x1, x2) + 1):
         my_map[x][y].blocked = False
@@ -192,8 +193,8 @@ def create_h_tunnel(x1, x2, y):
 
 
 def create_v_tunnel(y1, y2, x):
+    """Create Vertical Tunnel"""
     global my_map
-    #vertical tunnel
     for y in range(min(y1, y2), max(y1, y2) + 1):
         my_map[x][y].blocked = False
         my_map[x][y].block_sight = False
@@ -214,7 +215,9 @@ def is_visible_tile(x, y):
 
 
 def make_map():
+    """Make rooms on map."""
     global my_map
+    # Make map of filled tiles.
     my_map = [[ Tile(True)
         for y in range(MAP_HEIGHT) ]
             for x in range(MAP_WIDTH) ]
@@ -222,11 +225,14 @@ def make_map():
     num_rooms = 0
 
     for r in range(MAX_ROOMS):
+        # Random width, height, position inside map.
         w = randint(ROOM_MIN_SIZE, ROOM_MAX_SIZE)
         h = randint(ROOM_MIN_SIZE, ROOM_MAX_SIZE)
         x = randint(0, MAP_WIDTH-w-1)
         y = randint(0, MAP_HEIGHT-h-1)
+        # Create room from rect class.
         new_room = Rect(x, y, w, h)
+        # Check if other rooms would intersect this one.
         failed = False
         for other_room in rooms:
             if new_room.intersect(other_room):
@@ -234,12 +240,16 @@ def make_map():
                 break
 
         if not failed:
+            # Therefore, room doesn't intersect.
+            # Draw room and get center of it.
             create_room(new_room)
             (new_x, new_y) = new_room.center()
+            # If first room, center player.
             if num_rooms == 0:
                 player.x = new_x
                 player.y = new_y
             else:
+                # Otherwise, connect with tunnels.
                 (prev_x, prev_y) = rooms[num_rooms-1].center()
                 if randint(0, 1):
                     create_h_tunnel(prev_x, new_x, prev_y)
