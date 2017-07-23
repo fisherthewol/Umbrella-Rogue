@@ -303,8 +303,8 @@ def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 def get_names_under_mouse():
     global visible_tiles
     (x, y) = mouse_coord
-    names = [obj.name for obj in objects if obj.x == x and obj.y == y and
-             (obj.x, obj.y) in visible_tiles]
+    names = [obj.name for obj in objects
+        if obj.x == x and obj.y == y and (obj.x, obj.y) in visible_tiles]
     names = ", ".join(names)
     return names.capitalize()
 
@@ -353,7 +353,7 @@ def render_all():
     render_bar(1, 1, BAR_WIDTH, "HP", player.fighter.hp, player.fighter.max_hp,
                colors.light_red, colors.darker_red)
 
-    panel.draw_str(1, 0, get_names_under_mouse(), bg=None, fg=colors.orange)
+    panel.draw_str(1, 0, get_names_under_mouse(), bg=None, fg=colors.light_gray)
 
     root.blit(panel, 0, PANEL_Y, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0)
 
@@ -387,12 +387,15 @@ def player_move_or_attack(dx, dy):
 def handle_keys():
     global playerx, playery
     global fov_recompute
+    global mouse_coord
+
     keypress = False
     for event in tdl.event.get():
         if event.type == "KEYDOWN":
             user_input = event
         if event.type == "MOUSEMOTION":
             mouse_coord = event.cell
+
     if not keypress:
         return "didnt-take-turn"
 
