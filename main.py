@@ -393,6 +393,7 @@ def handle_keys():
     for event in tdl.event.get():
         if event.type == "KEYDOWN":
             user_input = event
+            keypress = True
         if event.type == "MOUSEMOTION":
             mouse_coord = event.cell
 
@@ -423,6 +424,7 @@ def player_death(player):
     message("You died!", colors.darker_red)
     player.char = "%"
     player.fg = colors.dark_red
+    player.name = "Remains of Player".format(player.name)
 
 
 def monster_death(monster):
