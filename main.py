@@ -22,23 +22,17 @@ MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
 MSG_HEIGHT = PANEL_HEIGHT - 1
 
 # Dungeon Gen.
-ROOM_MAX_SIZE = 10
-ROOM_MIN_SIZE = 6
-MAX_ROOMS = 30
-MAX_ROOM_MONSTERS = 3
-MAX_ROOM_ITEMS = 2
+ROOM_MAX_SIZE = settings.room_max_size
+ROOM_MIN_SIZE = settings.room_min_size
+MAX_ROOMS = settings.max_rooms
+MAX_ROOM_MONSTERS = settings.max_room_monsters
+MAX_ROOM_ITEMS = settings.max_room_items
 
 # FOV settings.
 FOV_ALGO = settings.fov_algo
 FOV_LIGHT_WALLS = settings.fov_light_walls
 TORCH_RADIUS = settings.torch_radius
 
-# Spell values.
-HEAL_AMOUNT = settings.heal_amount
-LIGHTNING_DAMAGE = settings.lightning_damage
-LIGHTNING_RANGE = settings.lightning_range
-CONFUSE_RANGE = settings.confuse_range
-CONFUSE_NUMBER_TURNS = settings.confuse_no_turns
 
 # Tile Colours.
 color_dark_wall = (0, 0, 100)
@@ -218,7 +212,7 @@ class Item:
 
 class ConfusedMonster:
     """AI for a confused monster."""
-    def __init__(self, old_ai, num_turns=CONFUSE_NUMBER_TURNS):
+    def __init__(self, old_ai, num_turns=settings.confuse_no_turns):
         self.old_ai = old_ai
         self.num_turns = num_turns
 
@@ -638,24 +632,24 @@ def cast_heal():
         return "cancelled"
 
     message("Your wounds start to feel better!", colors.violet)
-    player.fighter.heal(HEAL_AMOUNT)
+    player.fighter.heal(settings.heal_amount)
 
 
 def cast_lightning():
-    monster = closest_monster(LIGHTNING_RANGE)
+    monster = closest_monster(settings.lightning_range)
     if monster == None:
         message("No enemy is close enough to strike.", colors.amber)
         return "cancelled"
 
     message("A lightning bolt strikes {} with a loud thunder! "
-            "Damage: {}HP.".format(monster.name, str(LIGHTNING_DAMAGE)),
+            "Damage: {}HP.".format(monster.name, settings.lightning_damage),
             colors.light_blue)
-    monster.fighter.take_damage(LIGHTNING_DAMAGE)
+    monster.fighter.take_damage(settings.lightning_damage)
 
 
 def cast_confuse():
     """Confuses closest monster."""
-    monster = closest_monster(CONFUSE_RANGE)
+    monster = closest_monster(settings.confuse_range)
     if monster is None:
         message("No enemy close enough.", colors.amber)
         return "cancelled"
