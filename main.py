@@ -209,6 +209,14 @@ class Item:
             objects.remove(self.owner)
             message("You picked up a {}!".format(self.owner.name), colors.green)
 
+    def drop(self):
+        """Add item to map and remove from inventory."""
+        objects.append(self.owner)
+        inventory.remove(self.owner)
+        self.owner.x = player.x
+        self.owner.y = player.y
+        message("You dropped a {}".format(self.owner.name), colors.amber)
+
 
 class ConfusedMonster:
     """AI for a confused monster."""
@@ -565,6 +573,11 @@ def handle_keys():
                 if chosen_item is not None:
                     chosen_item.use()
 
+            if user_input.text == "d":
+                chosen_item = inventory_menu("Press key to drop item.\n")
+                if chosen_item is not None:
+                    chosen_item.drop()
+
             return "didnt-take-turn"
 
 
@@ -648,9 +661,11 @@ def cast_heal():
 
 
 def cast_lightning():
-    monster = closest_monster(settings.lightning_range)
+    message("Left-click a monster to target it, or right-click to cancel.",
+            colors.light_cyan)
+    monster = target_monster(settings.lightning_range)
     if monster == None:
-        message("No enemy is close enough to strike.", colors.amber)
+        message("Cancelled", colors.amber)
         return "cancelled"
 
     message("A lightning bolt strikes {} with a loud thunder! "
@@ -676,7 +691,7 @@ def cast_confuse():
 
 def cast_fireball():
     """Target tile; throw fireball."""
-    message("Target tile by left-click; cancel with right-click.",
+    message("Left-click a tile to target it, or right-click to cancel.",
             colors.light_cyan)
     (x, y) = target_tile()
     if x is None:
