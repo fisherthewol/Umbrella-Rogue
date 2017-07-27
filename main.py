@@ -611,6 +611,18 @@ def target_tile(max_range=None):
             return mouse_coord
 
 
+def target_monster(max_range=None):
+    """Returns clicked monster in FOV."""
+    while True:
+        (x, y) = target_tile(max_range)
+        if x is None:
+            return None
+
+        for obj in objects:
+            if obj.x == x and obj.y == y and obj.fighter and obj != player:
+                return obj
+
+
 def closest_monster(max_range):
     """Find closest monster in range and FOV."""
     closest_enemy = None
@@ -648,12 +660,13 @@ def cast_lightning():
 
 
 def cast_confuse():
-    """Confuses closest monster."""
-    monster = closest_monster(settings.confuse_range)
+    """Confuses selected monster."""
+    message("Left-click a monster to target it, or right-click to cancel.",
+            colors.light_cyan)
+    monster = target_monster(settings.confuse_range)
     if monster is None:
-        message("No enemy close enough.", colors.amber)
+        message("Cancelled.", colors.amber)
         return "cancelled"
-
     old_ai = monster.ai
     monster.ai = ConfusedMonster(old_ai)
     monster.ai.owner = monster
