@@ -119,6 +119,9 @@ class GameObject:
         dy = other.y - self.y
         return math.sqrt(dx ** 2 + dy ** 2)
 
+    def distance(self, x, y):
+        return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
+
     def draw(self):
         """Draw obj on screen."""
         global visible_tiles
@@ -363,10 +366,14 @@ def place_objects(room):
                 item_component = Item(use_function=cast_heal)
                 item = GameObject(x, y, "!", "healing potion", colors.violet,
                                   item=item_component)
-            elif dice < 70+15:
+            elif dice < 70+10:
                 item_component = Item(use_function=cast_lightning)
                 item = GameObject(x, y, "#", "scroll of lightning",
                                   colors.light_yellow, item=item_component)
+            elif dice < 70+10+10:
+                item_component = Item(use_function=cast_fireball)
+                item = GameObject(x, y, "#", "scroll of fireball",
+                                  colors.red, item=item_component)
             else:
                 item_component = Item(use_function=cast_confuse)
                 item = GameObject(x, y, "#", "scroll of confusion",
@@ -587,6 +594,29 @@ def monster_death(monster):
     monster.send_to_back()
 
 
+def target_tile(max_range=None):
+    """Return position of left-clicked tile in FOV."""
+    global mouse_coord
+    while True:
+        tdl.flush()
+        clicked = False
+        for event in tdl.event.get():
+            if event.type == "MOUSEMOTION":
+                mouse_coord = event.cell
+            if event.type == "MOUSEDOWN" and event.button == "LEFT":
+                clicked = True
+            elif ((event.type == 'MOUSEDOWN' and event.button == 'RIGHT') or
+                  (event.type == 'KEYDOWN' and event.key == 'ESCAPE')):
+                  return (None, None)
+        render_all()
+
+        x = mouse_coord[0]
+        y = mouse_coord[1]
+        if (clicked and mouse_coord in visible_tiles and
+           (max_range is None or player.distance(x, y) <= max_range)):
+            return mouse_coord
+
+
 def closest_monster(max_range):
     """Find closest monster in range and FOV."""
     closest_enemy = None
@@ -635,6 +665,24 @@ def cast_confuse():
     monster.ai.owner = monster
     message("The eyes of {} look vacant, "
             "as it stumbles around.".format(monster.name), colors.light_blue)
+
+
+def cast_fireball():
+    """Target tile; throw fireball."""
+    message("Target tile by left-click; cancel with right-click.",
+            colors.light_cyan)
+    (x, y) = target_tile()
+    if x is None:
+        message("Cancelled", colors.amber)
+        return "cancelled"
+    message("The fireball explodes, burning everything "
+            "within {} tiles!".format(settings.fireball_radius), colors.amber)
+
+    for obj in objects:
+        if obj.distance(x ,y) <= settings.fireball_radius and obj.fighter:
+            message("The {} is burned for {}HP!".format(obj.name,
+                                                        settings.fireball_damage))
+            obj.fighter.take_damage(settings.fireball_damage)
 
 
 tdl.set_font("dejavu10x10.png", greyscale=True, altLayout=True)

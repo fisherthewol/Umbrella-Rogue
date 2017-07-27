@@ -35,3 +35,5 @@ lightning_damage = 20
 lightning_range = 5
 confuse_no_turns = 10
 confuse_range = 8
+fireball_radius = 3
+fireball_damage = 12
