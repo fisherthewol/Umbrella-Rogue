@@ -94,8 +94,9 @@ class GameObject:
         self.item = item
         if self.item:
             self.item.owner = self
+        # Beginning items.
         if self.name == "player":
-            item_component = Item(use_function=cast_hometeleport)
+            item_component = Item(use_function=cast_teleporthome)
             beginscroll = GameObject(x, y, "#", "scroll of recall",
                                      colors.cyan, item=item_component)
             self.inventory.append(beginscroll)
@@ -323,7 +324,9 @@ def make_map():
             # If first room, center player.
             if num_rooms == 0:
                 player.x = new_x
+                player.spawnx = new_x
                 player.y = new_y
+                player.spawny = new_y
             else:
                 # Otherwise, connect with tunnels.
                 (prev_x, prev_y) = rooms[num_rooms-1].center()
@@ -715,12 +718,28 @@ def cast_fireball():
             obj.fighter.take_damage(settings.fireball_damage)
 
 
-def cast_hometeleport():
-    """Component for scroll of recall"""
-    message("With a zip and a zoom, you teleport to the beginning.")
+def cast_teleport(max_range=settings.teleport_range):
+    """Target tile; teleport to it."""
+    message("Left-click a tile to target it, or right-click to cancel.",
+            colors.light_cyan)
+    (x, y) = target_tile()
+    if x is None:
+        message("Cancelled", colors.amber)
+        return "cancelled"
+    if player.distance(x, y) <= max_range:
+        message("With a zip and a zoom, you teleport to the tile.", colors.blue)
+        player.x = x
+        player.y = y
+    else:
+        message("Tile out of range; cancelled.", colors.blue)
+        return "cancelled"
+
+
+def cast_teleporthome():
+    """Recall to spawn."""
+    message("With a zip and a zoom, you teleport to the Spawn.", colors.blue)
     player.x = player.spawnx
     player.y = player.spawny
-    render_all()
 
 
 tdl.set_font("dejavu10x10.png", greyscale=True, altLayout=True)

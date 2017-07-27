@@ -37,3 +37,4 @@ confuse_no_turns = 10
 confuse_range = 8
 fireball_radius = 3
 fireball_damage = 12
+teleport_range = 6
