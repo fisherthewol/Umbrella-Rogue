@@ -76,11 +76,14 @@ class GameObject:
                  fighter=None, ai=None, item=None):
         self.x = x
         self.y = y
+        self.spawnx = x
+        self.spawny = y
         self.char = char
         self.fg = fg
         self.bg = bg
         self.name = name
         self.blocks = blocks
+        self.inventory = []
         # Components.
         self.fighter = fighter
         if self.fighter:
@@ -91,6 +94,11 @@ class GameObject:
         self.item = item
         if self.item:
             self.item.owner = self
+        if self.name == "player":
+            item_component = Item(use_function=cast_hometeleport)
+            beginscroll = GameObject(x, y, "#", "scroll of recall",
+                                     colors.cyan, item=item_component)
+            self.inventory.append(beginscroll)
 
     def move(self, dx, dy):
         """Move by given amount (if not blocked)."""
@@ -197,22 +205,22 @@ class Item:
                     colors.amber)
         else:
             if self.use_function() != "cancelled":
-                inventory.remove(self.owner)
+                player.inventory.remove(self.owner)
 
     def pick_up(self):
         """Add to inventory and remove from map."""
-        if len(inventory) >= 26:
+        if len(player.inventory) >= 26:
             message("Inventory full, cannot pickup {}.".format(self.owner.name),
             colors.amber)
         else:
-            inventory.append(self.owner)
+            player.inventory.append(self.owner)
             objects.remove(self.owner)
             message("You picked up a {}!".format(self.owner.name), colors.green)
 
     def drop(self):
         """Add item to map and remove from inventory."""
         objects.append(self.owner)
-        inventory.remove(self.owner)
+        player.inventory.remove(self.owner)
         self.owner.x = player.x
         self.owner.y = player.y
         message("You dropped a {}".format(self.owner.name), colors.amber)
@@ -518,16 +526,16 @@ def menu(header, options, width):
 
 def inventory_menu(header):
     """Show menu from inventory as options."""
-    if len(inventory) == 0:
+    if len(player.inventory) == 0:
         options = ["Inventory is empty."]
     else:
-        options = [item.name for item in inventory]
+        options = [item.name for item in player.inventory]
 
     index = menu(header, options, INVENTORY_WIDTH)
 
-    if index is None or len(inventory) == 0:
+    if index is None or len(player.inventory) == 0:
         return None
-    return inventory[index].item
+    return player.inventory[index].item
 
 
 def handle_keys():
@@ -707,6 +715,14 @@ def cast_fireball():
             obj.fighter.take_damage(settings.fireball_damage)
 
 
+def cast_hometeleport():
+    """Component for scroll of recall"""
+    message("With a zip and a zoom, you teleport to the beginning.")
+    player.x = player.spawnx
+    player.y = player.spawny
+    render_all()
+
+
 tdl.set_font("dejavu10x10.png", greyscale=True, altLayout=True)
 root = tdl.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Umbrella", fullscreen=False)
 tdl.setFPS(LIMIT_FPS)
@@ -726,7 +742,6 @@ make_map()
 fov_recompute = True
 game_state = "playing"
 player_action = None
-inventory = []
 
 # Message components.
 game_msgs = []
