@@ -19,11 +19,13 @@ PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
 MSG_X = BAR_WIDTH + 2
 MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
 MSG_HEIGHT = PANEL_HEIGHT - 1
+INVENTORY_WIDTH = 50
 # Dungeon Gen.
 ROOM_MAX_SIZE = 10
 ROOM_MIN_SIZE = 6
 MAX_ROOMS = 30
 MAX_ROOM_MONSTERS = 3
+MAX_ROOM_ITEMS = 2
 # FOV settings.
 FOV_ALGO = "BASIC"
 FOV_LIGHT_WALLS = True
@@ -67,7 +69,7 @@ class Rect:
 class GameObject:
     """Generic Object."""
     def __init__(self, x, y, char, name, fg, bg=None, blocks=False,
-                 fighter=None, ai=None):
+                 fighter=None, ai=None, item=None):
         self.x = x
         self.y = y
         self.char = char
@@ -75,12 +77,16 @@ class GameObject:
         self.bg = bg
         self.name = name
         self.blocks = blocks
+        # Components.
         self.fighter = fighter
         if self.fighter:
             self.fighter.owner = self
         self.ai = ai
         if self.ai:
             self.ai.owner = self
+        self.item = item
+        if self.item:
+            self.item.owner = self
 
     def move(self, dx, dy):
         """Move by given amount (if not blocked)."""
@@ -164,6 +170,19 @@ class BasicMonster:
                 monster.move_towards(player.x, player.y)
             elif player.fighter.hp > 0:
                 monster.fighter.attack(player)
+
+
+class Item:
+    """Item that can be in inv. and used."""
+    def pick_up(self):
+        """Add to inventory and remove from map."""
+        if len(inventory) >= 26:
+            message("Inventory full, cannot pickup {}.".format(self.owner.name),
+            colors.amber)
+        else:
+            inventory.append(self.owner)
+            objects.remove(self.owner)
+            message("You picked up a {}!".format(self.owner.name), colors.green)
 
 
 def is_blocked(x, y):
@@ -263,11 +282,11 @@ def make_map():
 
 
 def place_objects(room):
-    """Add Monsters to room."""
+    """Add Monsters/Items to room."""
     num_monsters = randint(0, MAX_ROOM_MONSTERS)
     for i in range(num_monsters):
-        x = randint(room.x1, room.x2)
-        y = randint(room.y1, room.y2)
+        x = randint(room.x1+1, room.x2-1)
+        y = randint(room.y1+1, room.y2-1)
         if not is_blocked(x, y):
             if randint(0, 100) < 80:
                 fighter_component = Fighter(hp=10,
@@ -288,6 +307,19 @@ def place_objects(room):
                                      blocks=True, fighter=fighter_component,
                                      ai=ai_component)
             objects.append(monster)
+
+    num_items = randint(0, MAX_ROOM_ITEMS)
+
+    for i in range(num_items):
+        x = randint(room.x1+1, room.x2-1)
+        y = randint(room.y1+1, room.y2-1)
+
+        if not is_blocked(x, y):
+            item_component = Item()
+            item = GameObject(x, y, "!", "healing potion", colors.violet,
+                              item=item_component)
+            objects.append(item)
+            item.send_to_back()
 
 
 def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
@@ -384,6 +416,48 @@ def player_move_or_attack(dx, dy):
         fov_recompute = True
 
 
+def menu(header, options, width):
+    if len(options) > 26:
+        raise ValueError("Menu cannot have more than 26 options.")
+
+    header_wrapped = textwrap.wrap(header, width)
+    header_height = len(header_wrapped)
+    height = len(options) + header_height
+
+    window = tdl.Console(width, height)
+    window.draw_rect(0, 0, width, height, None, fg=colors.white, bg=None)
+    for i, line in enumerate(header_wrapped):
+        window.draw_str(0, 0+i, header_wrapped[i])
+
+    y = header_height
+    letter_index = ord("a")
+    for option_text in options:
+        text = "(" + chr(letter_index) + ")" + option_text
+        window.draw_str(0, y, text, bg=None)
+        y += 1
+        letter_index += 1
+
+    x = SCREEN_WIDTH//2 - width//2
+    y = SCREEN_HEIGHT//2 - height//2
+    root.blit(window, x, y, width, height, 0, 0)
+
+    tdl.flush()
+    key = tdl.event.key_wait()
+    key_char = key.char
+    if key_char == "":
+        key_char = " " # TODO: PLACEHOLDER
+
+
+def inventory_menu(header):
+    """Show menu from inventory as options."""
+    if len(inventory) == 0:
+        options = ["Inventory is empty."]
+    else:
+        options = [item.name for item in inventory]
+
+    index = menu(header, options, INVENTORY_WIDTH)
+
+
 def handle_keys():
     global playerx, playery
     global fov_recompute
@@ -415,6 +489,16 @@ def handle_keys():
         elif user_input.key == "RIGHT":
             player_move_or_attack(1, 0)
         else:
+            if user_input.text == "g":
+                for obj in objects:
+                    if obj.x == player.x and obj.y == player.y and obj.item:
+                        obj.item.pick_up()
+                        break
+            elif user_input.text == "i":
+                # Show inventory.
+                inventory_menu("Press key next to item to use it; "
+                               "any other to cancel menu.\n")
+
             return "didnt-take-turn"
 
 
@@ -457,11 +541,13 @@ make_map()
 fov_recompute = True
 game_state = "playing"
 player_action = None
+inventory = []
 
 # Message components.
 game_msgs = []
 
-message("Welcome. This is a hell you can't escape.", colors.red)
+message("Welcome to Umbrella. Arrow keys for move, g to pickup item, "
+        "i for inventory", colors.red)
 mouse_coord = (0, 0)
 # Main Loop.
 while not tdl.event.is_window_closed():
