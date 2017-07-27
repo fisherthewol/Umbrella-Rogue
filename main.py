@@ -28,11 +28,15 @@ MAX_ROOMS = 30
 MAX_ROOM_MONSTERS = 3
 MAX_ROOM_ITEMS = 2
 
-# FOV and Other settings.
+# FOV settings.
 FOV_ALGO = settings.fov_algo
 FOV_LIGHT_WALLS = settings.fov_light_walls
 TORCH_RADIUS = settings.torch_radius
+
+# Spell values.
 HEAL_AMOUNT = settings.heal_amount
+LIGHTNING_DAMAGE = settings.lightning_damage
+LIGHTNING_RANGE = settings.lightning_range
 
 # Tile Colours.
 color_dark_wall = (0, 0, 100)
@@ -336,9 +340,16 @@ def place_objects(room):
         y = randint(room.y1+1, room.y2-1)
 
         if not is_blocked(x, y):
-            item_component = Item(use_function=cast_heal)
-            item = GameObject(x, y, "!", "healing potion", colors.violet,
-                              item=item_component)
+            if randint(0, 100) < 70:
+                item_component = Item(use_function=cast_heal)
+                item = GameObject(x, y, "!", "healing potion", colors.violet,
+                                  item=item_component)
+
+            else:
+                item_component = Item(use_function=cast_lightning)
+                item = GameObject(x, y, "#", "scroll of lightning",
+                                  colors.light_yellow, item=item_component)
+
             objects.append(item)
             item.send_to_back()
 
@@ -554,6 +565,20 @@ def monster_death(monster):
     monster.send_to_back()
 
 
+def closest_monster(max_range):
+    """Find closest monster in range and FOV."""
+    closest_enemy = None
+    closest_dist = max_range + 1
+
+    for obj in objects:
+        if (obj.fighter) and (not obj == player) and ((obj.x, obj.y) in visible_tiles):
+            dist = player.distance_to(obj)
+            if dist < closest_dist:
+                closest_enemy = obj
+                closest_dist = dist
+    return closest_enemy
+
+
 def cast_heal():
     """Heal Player."""
     if player.fighter.hp == player.fighter.max_hp:
@@ -562,6 +587,17 @@ def cast_heal():
 
     message("Your wounds start to feel better!", colors.violet)
     player.fighter.heal(HEAL_AMOUNT)
+
+
+def cast_lightning():
+    monster = closest_monster(LIGHTNING_RANGE)
+    if monster == None:
+        message("No enemy is close enough to strike.", colors.amber)
+        return "cancelled"
+
+    message("A lightning bolt strikes {} with a loud thunder! "
+            "Damage: {}HP.".format(monster.name, str(LIGHTNING_DAMAGE)))
+    monster.fighter.take_damage(LIGHTNING_DAMAGE)
 
 
 tdl.set_font("dejavu10x10.png", greyscale=True, altLayout=True)

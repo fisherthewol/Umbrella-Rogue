@@ -24,9 +24,12 @@ max_rooms = 30
 max_room_monsters = 3
 max_room_items = 2
 
-"""FOV and Other settings."""
+"""FOV settings."""
 fov_algo = "BASIC"
 fov_light_walls = True
 torch_radius = 10
 
+"""Spells quantities."""
 heal_amount = 4
+lightning_damage = 20
+lightning_range = 5
