@@ -37,6 +37,8 @@ TORCH_RADIUS = settings.torch_radius
 HEAL_AMOUNT = settings.heal_amount
 LIGHTNING_DAMAGE = settings.lightning_damage
 LIGHTNING_RANGE = settings.lightning_range
+CONFUSE_RANGE = settings.confuse_range
+CONFUSE_NUMBER_TURNS = settings.confuse_no_turns
 
 # Tile Colours.
 color_dark_wall = (0, 0, 100)
@@ -211,6 +213,22 @@ class Item:
             message("You picked up a {}!".format(self.owner.name), colors.green)
 
 
+class ConfusedMonster:
+    """AI for a confused monster."""
+    def __init__(self, old_ai, num_turns=CONFUSE_NUMBER_TURNS):
+        self.old_ai = old_ai
+        self.num_turns = num_turns
+
+    def take_turn(self):
+        if self.num_turns > 0:
+            self.owner.move(randint(-1, 1), randint(-1, 1))
+            self.num_turns -= 1
+        else:
+            self.owner.ai = self.old_ai
+            message("The {} is no longer confused!".format(self.owner.name),
+                    colors.amber)
+
+
 def is_blocked(x, y):
     if my_map[x][y].blocked:
         return True
@@ -340,15 +358,19 @@ def place_objects(room):
         y = randint(room.y1+1, room.y2-1)
 
         if not is_blocked(x, y):
-            if randint(0, 100) < 70:
+            dice = randint(0, 100)
+            if dice < 70:
                 item_component = Item(use_function=cast_heal)
                 item = GameObject(x, y, "!", "healing potion", colors.violet,
                                   item=item_component)
-
-            else:
+            elif dice < 70+15:
                 item_component = Item(use_function=cast_lightning)
                 item = GameObject(x, y, "#", "scroll of lightning",
                                   colors.light_yellow, item=item_component)
+            else:
+                item_component = Item(use_function=cast_confuse)
+                item = GameObject(x, y, "#", "scroll of confusion",
+                                  colors.purple, item=item_component)
 
             objects.append(item)
             item.send_to_back()
@@ -538,7 +560,7 @@ def handle_keys():
 
             if user_input.text == "i":
                 chosen_item = inventory_menu("Press key next to item to use it;"
-                                             " esc/enter to cancel menu.\n")
+                                             " none-item key to cancel menu.\n")
                 if chosen_item is not None:
                     chosen_item.use()
 
@@ -596,8 +618,23 @@ def cast_lightning():
         return "cancelled"
 
     message("A lightning bolt strikes {} with a loud thunder! "
-            "Damage: {}HP.".format(monster.name, str(LIGHTNING_DAMAGE)))
+            "Damage: {}HP.".format(monster.name, str(LIGHTNING_DAMAGE)),
+            colors.light_blue)
     monster.fighter.take_damage(LIGHTNING_DAMAGE)
+
+
+def cast_confuse():
+    """Confuses closest monster."""
+    monster = closest_monster(CONFUSE_RANGE)
+    if monster is None:
+        message("No enemy close enough.", colors.amber)
+        return "cancelled"
+
+    old_ai = monster.ai
+    monster.ai = ConfusedMonster(old_ai)
+    monster.ai.owner = monster
+    message("The eyes of {} look vacant, "
+            "as it stumbles around.".format(monster.name), colors.light_blue)
 
 
 tdl.set_font("dejavu10x10.png", greyscale=True, altLayout=True)
@@ -625,7 +662,7 @@ inventory = []
 game_msgs = []
 
 message("Welcome to Umbrella. Arrow keys for move, g to pickup item, "
-        "i for inventory", colors.red)
+        "i for inventory. glhf.", colors.red)
 mouse_coord = (0, 0)
 # Main Loop.
 while not tdl.event.is_window_closed():

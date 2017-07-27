@@ -1,4 +1,4 @@
-"""Settings for Umbrella Rogue.
+"""Settings file for Umbrella Rogue.
 
 The main file pulls this through import and sets it at the beginning of the
 file.
@@ -33,3 +33,5 @@ torch_radius = 10
 heal_amount = 4
 lightning_damage = 20
 lightning_range = 5
+confuse_no_turns = 10
+confuse_range = 8
