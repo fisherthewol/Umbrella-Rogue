@@ -174,6 +174,18 @@ class BasicMonster:
 
 class Item:
     """Item that can be in inv. and used."""
+    def __init__(self, use_function=None):
+        self.use_function = use_function
+
+    def use(self):
+        """Call use function if defined."""
+        if self.use_function is None:
+            message("The {} cannot be used.".format(self.owner.name),
+                    colors.amber)
+        else:
+            if self.use_function() != "cancelled":
+                inventory.remove(self.owner)
+
     def pick_up(self):
         """Add to inventory and remove from map."""
         if len(inventory) >= 26:
@@ -520,6 +532,16 @@ def monster_death(monster):
     monster.ai = None
     monster.name = "Remains of {}".format(monster.name)
     monster.send_to_back()
+
+
+def cast_heal():
+    """Heal Player."""
+    if player.fighter.hp == player.fighter.max_hp:
+        message("You are already at full health.", colors.amber)
+        return "cancelled"
+
+    message("Your wounds start to feel better!", colors.violet)
+    player.fighter.heal(HEAL_AMOUNT)
 
 
 tdl.set_font("dejavu10x10.png", greyscale=True, altLayout=True)
