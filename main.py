@@ -4,32 +4,36 @@ from random import randint
 import colors
 import math
 import textwrap
+import settings
 
-# Game Constants.
-SCREEN_WIDTH = 80
-SCREEN_HEIGHT = 50
-MAP_WIDTH = 80
-MAP_HEIGHT = 43
+# GUI/Window settings.
+SCREEN_WIDTH = settings.screen_width
+SCREEN_HEIGHT = settings.screen_height
+MAP_WIDTH = settings.map_width
+MAP_HEIGHT = settings.map_height
 REALTIME = False
-LIMIT_FPS = 30
-# GUI Constants.
-BAR_WIDTH = 20
-PANEL_HEIGHT = 7
+LIMIT_FPS = settings.fps
+BAR_WIDTH = settings.bar_width
+PANEL_HEIGHT = settings.panel_height
+INVENTORY_WIDTH = settings.inventory_width
 PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
 MSG_X = BAR_WIDTH + 2
 MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
 MSG_HEIGHT = PANEL_HEIGHT - 1
-INVENTORY_WIDTH = 50
+
 # Dungeon Gen.
 ROOM_MAX_SIZE = 10
 ROOM_MIN_SIZE = 6
 MAX_ROOMS = 30
 MAX_ROOM_MONSTERS = 3
 MAX_ROOM_ITEMS = 2
-# FOV settings.
-FOV_ALGO = "BASIC"
-FOV_LIGHT_WALLS = True
-TORCH_RADIUS = 10
+
+# FOV and Other settings.
+FOV_ALGO = settings.fov_algo
+FOV_LIGHT_WALLS = settings.fov_light_walls
+TORCH_RADIUS = settings.torch_radius
+HEAL_AMOUNT = settings.heal_amount
+
 # Tile Colours.
 color_dark_wall = (0, 0, 100)
 color_light_wall = (130, 110, 50)
@@ -159,6 +163,12 @@ class Fighter:
             message("{} attacks {}, but it has no effect!".format(parentname,
                                                                 target.name),
                                                                 colors.flame)
+
+    def heal(self, amount):
+        """Heal by given amount, without going over."""
+        self.hp += amount
+        if self.hp > self.max_hp:
+            self.hp = self.max_hp
 
 
 class BasicMonster:
@@ -321,13 +331,12 @@ def place_objects(room):
             objects.append(monster)
 
     num_items = randint(0, MAX_ROOM_ITEMS)
-
     for i in range(num_items):
         x = randint(room.x1+1, room.x2-1)
         y = randint(room.y1+1, room.y2-1)
 
         if not is_blocked(x, y):
-            item_component = Item()
+            item_component = Item(use_function=cast_heal)
             item = GameObject(x, y, "!", "healing potion", colors.violet,
                               item=item_component)
             objects.append(item)
@@ -459,6 +468,11 @@ def menu(header, options, width):
     if key_char == "":
         key_char = " " # TODO: PLACEHOLDER
 
+    index = ord(key_char) - ord("a")
+    if index >= 0 and index < len(options):
+        return index
+    return None
+
 
 def inventory_menu(header):
     """Show menu from inventory as options."""
@@ -468,6 +482,10 @@ def inventory_menu(header):
         options = [item.name for item in inventory]
 
     index = menu(header, options, INVENTORY_WIDTH)
+
+    if index is None or len(inventory) == 0:
+        return None
+    return inventory[index].item
 
 
 def handle_keys():
@@ -506,10 +524,12 @@ def handle_keys():
                     if obj.x == player.x and obj.y == player.y and obj.item:
                         obj.item.pick_up()
                         break
-            elif user_input.text == "i":
-                # Show inventory.
-                inventory_menu("Press key next to item to use it; "
-                               "any other to cancel menu.\n")
+
+            if user_input.text == "i":
+                chosen_item = inventory_menu("Press key next to item to use it;"
+                                             " esc/enter to cancel menu.\n")
+                if chosen_item is not None:
+                    chosen_item.use()
 
             return "didnt-take-turn"
 
