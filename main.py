@@ -163,14 +163,14 @@ class Fighter:
         parentname = self.owner.name.capitalize()
         if damage > 0:
             message("{} attacks {} for {} hp.".format(parentname,
-                                                    target.name,
-                                                    damage),
-                                                    colors.flame)
+                                                      target.name,
+                                                      damage),
+                    colors.flame)
             target.fighter.take_damage(damage)
         else:
             message("{} attacks {}, but it has no effect!".format(parentname,
-                                                                target.name),
-                                                                colors.flame)
+                                                                  target.name),
+                    colors.flame)
 
     def heal(self, amount):
         """Heal by given amount, without going over."""
@@ -207,12 +207,14 @@ class Item:
     def pick_up(self):
         """Add to inventory and remove from map."""
         if len(player.inventory) >= 26:
-            message("Inventory full, cannot pickup {}.".format(self.owner.name),
-            colors.amber)
+            message("Inventory full, "
+                    "cannot pickup {}.".format(self.owner.name),
+                    colors.amber)
         else:
             player.inventory.append(self.owner)
             objects.remove(self.owner)
-            message("You picked up a {}!".format(self.owner.name), colors.green)
+            message("You picked up a {}!".format(self.owner.name),
+                    colors.green)
 
     def drop(self):
         """Add item to map and remove from inventory."""
@@ -352,7 +354,8 @@ def place_objects(room):
                                             power=3,
                                             death_function=monster_death)
                 ai_component = BasicMonster()
-                monster = GameObject(x, y, "o", "orc", colors.desaturated_green,
+                monster = GameObject(x, y, "o", "orc",
+                                     colors.desaturated_green,
                                      blocks=True, fighter=fighter_component,
                                      ai=ai_component)
             else:
@@ -430,14 +433,17 @@ def render_all():
                 if not visible:
                     if my_map[x][y].explored:
                         if wall:
-                            con.draw_char(x, y, None, fg=None, bg=color_dark_wall)
+                            con.draw_char(x, y, None, fg=None,
+                                          bg=color_dark_wall)
                         else:
-                            con.draw_char(x, y, None, fg=None, bg=color_dark_ground)
+                            con.draw_char(x, y, None, fg=None,
+                                          bg=color_dark_ground)
                 else:
                     if wall:
                         con.draw_char(x, y, None, fg=None, bg=color_light_wall)
                     else:
-                        con.draw_char(x, y, None, fg=None, bg=color_light_ground)
+                        con.draw_char(x, y, None, fg=None,
+                                      bg=color_light_ground)
                     my_map[x][y].explored = True
     for obj in objects:
         if obj != player:
@@ -457,12 +463,13 @@ def render_all():
     render_bar(1, 1, BAR_WIDTH, "HP", player.fighter.hp, player.fighter.max_hp,
                colors.light_red, colors.darker_red)
 
-    panel.draw_str(1, 0, get_names_under_mouse(), bg=None, fg=colors.light_gray)
+    panel.draw_str(1, 0, get_names_under_mouse(), bg=None,
+                   fg=colors.light_gray)
 
     root.blit(panel, 0, PANEL_Y, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0)
 
 
-def message(new_msg, color = colors.white):
+def message(new_msg, color=colors.white):
     """Func for displaying message to GUI."""
     new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
     for line in new_msg_lines:
@@ -517,7 +524,7 @@ def menu(header, options, width):
     key = tdl.event.key_wait()
     key_char = key.char
     if key_char == "":
-        key_char = " " # TODO: PLACEHOLDER
+        key_char = " "  # TODO: PLACEHOLDER
 
     index = ord(key_char) - ord("a")
     if index >= 0 and index < len(options):
@@ -581,8 +588,9 @@ def handle_keys():
                         break
 
             if user_input.text == "i":
-                chosen_item = inventory_menu("Press key next to item to use it;"
-                                             " none-item key to cancel menu.\n")
+                chosen_item = inventory_menu("Press key next to item to "
+                                             "use it; none-item key to cancel"
+                                             " menu.\n")
                 if chosen_item is not None:
                     chosen_item.use()
 
@@ -627,7 +635,7 @@ def target_tile(max_range=None):
                 clicked = True
             elif ((event.type == 'MOUSEDOWN' and event.button == 'RIGHT') or
                   (event.type == 'KEYDOWN' and event.key == 'ESCAPE')):
-                  return (None, None)
+                    return (None, None)
         render_all()
 
         x = mouse_coord[0]
@@ -714,9 +722,10 @@ def cast_fireball():
             "within {} tiles!".format(settings.fireball_radius), colors.amber)
 
     for obj in objects:
-        if obj.distance(x ,y) <= settings.fireball_radius and obj.fighter:
-            message("The {} is burned for {}HP!".format(obj.name,
-                                                        settings.fireball_damage))
+        if obj.distance(x, y) <= settings.fireball_radius and obj.fighter:
+            message("The {} is burned "
+                    "for {}HP!".format(obj.name,
+                                       settings.fireball_damage))
             obj.fighter.take_damage(settings.fireball_damage)
 
 
@@ -729,7 +738,8 @@ def cast_teleport(max_range=settings.teleport_range):
         message("Cancelled", colors.amber)
         return "cancelled"
     if player.distance(x, y) <= max_range:
-        message("With a zip and a zoom, you teleport to the tile.", colors.blue)
+        message("With a zip and a zoom, you teleport to the tile.",
+                colors.blue)
         player.x = x
         player.y = y
     else:
@@ -739,7 +749,7 @@ def cast_teleport(max_range=settings.teleport_range):
 
 def cast_teleporthome():
     """Recall to spawn."""
-    message("With a zip and a zoom, you teleport to the Spawn.", colors.blue)
+    message("With a zip and a zoom, you teleport to spawn.", colors.blue)
     player.x = player.spawnx
     player.y = player.spawny
 
@@ -836,7 +846,8 @@ def main_menu():
 
 
 tdl.set_font("dejavu10x10.png", greyscale=True, altLayout=True)
-root = tdl.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Umbrella", fullscreen=False)
+root = tdl.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Umbrella",
+                fullscreen=False)
 tdl.setFPS(LIMIT_FPS)
 con = tdl.Console(MAP_WIDTH, MAP_HEIGHT)
 panel = tdl.Console(SCREEN_WIDTH, PANEL_HEIGHT)
