@@ -5,6 +5,8 @@ import colors
 import math
 import textwrap
 import settings
+from tcod import image_load
+import shelve
 
 # GUI/Window settings.
 SCREEN_WIDTH = settings.screen_width
@@ -83,7 +85,7 @@ class GameObject:
         self.bg = bg
         self.name = name
         self.blocks = blocks
-        self.inventory = []
+        self.inventory = ()
         # Components.
         self.fighter = fighter
         if self.fighter:
@@ -94,12 +96,6 @@ class GameObject:
         self.item = item
         if self.item:
             self.item.owner = self
-        # Beginning items.
-        if self.name == "player":
-            item_component = Item(use_function=cast_teleporthome)
-            beginscroll = GameObject(x, y, "#", "scroll of recall",
-                                     colors.cyan, item=item_component)
-            self.inventory.append(beginscroll)
 
     def move(self, dx, dy):
         """Move by given amount (if not blocked)."""
@@ -293,7 +289,9 @@ def is_visible_tile(x, y):
 
 def make_map():
     """Make rooms on map."""
-    global my_map
+    global my_map, objects
+    objects = [player]
+
     # Make map of filled tiles.
     my_map = [[ Tile(True)
         for y in range(MAP_HEIGHT) ]
@@ -541,6 +539,10 @@ def inventory_menu(header):
     return player.inventory[index].item
 
 
+def msgbox(text, width=50):
+    menu(text, [], width)
+
+
 def handle_keys():
     global playerx, playery
     global fov_recompute
@@ -664,7 +666,7 @@ def closest_monster(max_range):
 def cast_heal():
     """Heal Player."""
     if player.fighter.hp == player.fighter.max_hp:
-        message("You are already at full health.", colors.amber)
+        message("You are already at full health. Cancelled.", colors.amber)
         return "cancelled"
 
     message("Your wounds start to feel better!", colors.violet)
@@ -742,42 +744,102 @@ def cast_teleporthome():
     player.y = player.spawny
 
 
+def save_game():
+    """Open an new empty shelf to write data."""
+    with shelve.open("savegame", "n") as savefile:
+        savefile["my_map"] = my_map
+        savefile["objects"] = objects
+        savefile["player_index"] = objects.index(player)
+        savefile["inventory"] = player.inventory
+        savefile["game_msgs"] = game_msgs
+        savefile["game_state"] = game_state
+
+
+def load_game():
+    global my_map, objects, player, game_msgs, game_state
+
+    with shelve.open("savegame", "r") as savefile:
+        my_map = savefile["my_map"]
+        objects = savefile["objects"]
+        player = objects[savefile["player_index"]]
+        player.inventory = savefile["inventory"]
+        game_msgs = savefile["game_msgs"]
+        game_state = savefile["game_state"]
+
+
+def new_game():
+    """Init GameObjects for new game state."""
+    global player, game_msgs, game_state
+    # Create player.
+    fighter_component = Fighter(hp=30, defense=2, power=5,
+                                death_function=player_death)
+    player = GameObject(0, 0, "@", "player",
+                        colors.white, None, blocks=True,
+                        fighter=fighter_component)
+
+    # Generate map (not drawn)
+    make_map()
+    game_state = "playing"
+
+    # Init player inv.
+    item_component = Item(use_function=cast_teleporthome)
+    beginscroll = GameObject(player.x, player.y, "#", "scroll of recall",
+                             colors.cyan, item=item_component)
+    player.inventory = []
+    player.inventory.append(beginscroll)
+    game_msgs = []
+    message("Welcome to Umbrella. Arrow keys to move, g to pickup item, "
+            "i for inventory, d for drop. glhf!", colors.amber)
+
+
+def play_game():
+    """Play game (main loop)."""
+    global mouse_coord, fov_recompute
+
+    player_action = None
+    mouse_coord = (0, 0)
+    fov_recompute = True
+    con.clear()
+
+    while not tdl.event.is_window_closed():
+        render_all()
+        tdl.flush()
+        for obj in objects:
+            obj.clear()
+        player_action = handle_keys()
+        if player_action == "exit":
+            save_game()
+            break
+        if game_state == "playing" and player_action != "didnt-take-turn":
+            for obj in objects:
+                if obj.ai:
+                    obj.ai.take_turn()
+
+
+def main_menu():
+    img = image_load("menu.png")
+    while not tdl.event.is_window_closed():
+        img.blit_2x(root, 0, 0)
+        choice = menu("", ["Play New", "Continue", "Quit"], 24)
+        if choice == 0:
+            new_game()
+            play_game()
+        elif choice == 1:
+            try:
+                load_game()
+            except:
+                msgbox("\nNo save game/file corruption.", 24)
+                continue
+            play_game()
+        elif choice == 2:
+            break
+
+
 tdl.set_font("dejavu10x10.png", greyscale=True, altLayout=True)
 root = tdl.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Umbrella", fullscreen=False)
 tdl.setFPS(LIMIT_FPS)
 con = tdl.Console(MAP_WIDTH, MAP_HEIGHT)
 panel = tdl.Console(SCREEN_WIDTH, PANEL_HEIGHT)
 
-fighter_component = Fighter(hp=30, defense=2, power=5,
-                            death_function=player_death)
-player = GameObject(0, 0, "@", "player",
-                    colors.white, None, blocks=True,
-                    fighter=fighter_component)
-
-objects = [player]
-
-make_map()
-
-fov_recompute = True
-game_state = "playing"
-player_action = None
-
-# Message components.
-game_msgs = []
-
-message("Welcome to Umbrella. Arrow keys for move, g to pickup item, "
-        "i for inventory. glhf.", colors.red)
-mouse_coord = (0, 0)
-# Main Loop.
-while not tdl.event.is_window_closed():
-    render_all()
-    tdl.flush()
-    for obj in objects:
-        obj.clear()
-    player_action = handle_keys()
-    if player_action == "exit":
-        break
-    if game_state == "playing" and player_action != "didnt-take-turn":
-        for obj in objects:
-            if obj.ai:
-                obj.ai.take_turn()
+# Start game.
+main_menu()
