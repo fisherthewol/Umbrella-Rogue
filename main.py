@@ -23,18 +23,6 @@ MSG_X = BAR_WIDTH + 2
 MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
 MSG_HEIGHT = PANEL_HEIGHT - 1
 
-# Dungeon Gen.
-ROOM_MAX_SIZE = settings.room_max_size
-ROOM_MIN_SIZE = settings.room_min_size
-MAX_ROOMS = settings.max_rooms
-MAX_ROOM_MONSTERS = settings.max_room_monsters
-MAX_ROOM_ITEMS = settings.max_room_items
-
-# FOV settings.
-FOV_ALGO = settings.fov_algo
-FOV_LIGHT_WALLS = settings.fov_light_walls
-TORCH_RADIUS = settings.torch_radius
-
 
 # Tile Colours.
 color_dark_wall = (0, 0, 100)
@@ -44,7 +32,7 @@ color_light_ground = (200, 180, 50)
 
 
 class Tile:
-    """Map tile class."""
+    """Tile on map."""
     def __init__(self, blocked, block_sight=None):
         self.blocked = blocked
         self.explored = False
@@ -54,7 +42,7 @@ class Tile:
 
 
 class Rect:
-    """A rectangle class - Usually a Room."""
+    """A rectangle - Usually a room."""
     def __init__(self, x, y, w, h):
         self.x1 = x
         self.y1 = y
@@ -62,6 +50,7 @@ class Rect:
         self.y2 = y + h
 
     def center(self):
+        """Return coordinates of center of room."""
         center_x = (self.x1 + self.x2) // 2
         center_y = (self.y1 + self.y2) // 2
         return (center_x, center_y)
@@ -85,7 +74,6 @@ class GameObject:
         self.bg = bg
         self.name = name
         self.blocks = blocks
-        self.inventory = ()
         # Components.
         self.fighter = fighter
         if self.fighter:
@@ -113,7 +101,7 @@ class GameObject:
         self.move(dx, dy)
 
     def distance_to(self, other):
-        """Return distance to another object."""
+        """Return distance to other object."""
         dx = other.x - self.x
         dy = other.y - self.y
         return math.sqrt(dx ** 2 + dy ** 2)
@@ -180,7 +168,7 @@ class Fighter:
 
 
 class BasicMonster:
-    """Basic Monster AI"""
+    """Basic Monster AI."""
     def take_turn(self):
         monster = self.owner
         if (monster.x, monster.y) in visible_tiles:
@@ -188,6 +176,22 @@ class BasicMonster:
                 monster.move_towards(player.x, player.y)
             elif player.fighter.hp > 0:
                 monster.fighter.attack(player)
+
+
+class ConfusedMonster:
+    """AI for a confused monster."""
+    def __init__(self, old_ai, num_turns=settings.confuse_no_turns):
+        self.old_ai = old_ai
+        self.num_turns = num_turns
+
+    def take_turn(self):
+        if self.num_turns > 0:
+            self.owner.move(randint(-1, 1), randint(-1, 1))
+            self.num_turns -= 1
+        else:
+            self.owner.ai = self.old_ai
+            message("The {} is no longer confused!".format(self.owner.name),
+                    colors.amber)
 
 
 class Item:
@@ -225,23 +229,8 @@ class Item:
         message("You dropped a {}".format(self.owner.name), colors.amber)
 
 
-class ConfusedMonster:
-    """AI for a confused monster."""
-    def __init__(self, old_ai, num_turns=settings.confuse_no_turns):
-        self.old_ai = old_ai
-        self.num_turns = num_turns
-
-    def take_turn(self):
-        if self.num_turns > 0:
-            self.owner.move(randint(-1, 1), randint(-1, 1))
-            self.num_turns -= 1
-        else:
-            self.owner.ai = self.old_ai
-            message("The {} is no longer confused!".format(self.owner.name),
-                    colors.amber)
-
-
 def is_blocked(x, y):
+    """Tests if given coords are blocked/blocking."""
     if my_map[x][y].blocked:
         return True
     for obj in objects:
@@ -260,7 +249,7 @@ def create_room(room):
 
 
 def create_h_tunnel(x1, x2, y):
-    """Create horizontal Tunnel"""
+    """Create horizontal Tunnel."""
     global my_map
     for x in range(min(x1, x2), max(x1, x2) + 1):
         my_map[x][y].blocked = False
@@ -268,7 +257,7 @@ def create_h_tunnel(x1, x2, y):
 
 
 def create_v_tunnel(y1, y2, x):
-    """Create Vertical Tunnel"""
+    """Create Vertical Tunnel."""
     global my_map
     for y in range(min(y1, y2), max(y1, y2) + 1):
         my_map[x][y].blocked = False
@@ -276,6 +265,7 @@ def create_v_tunnel(y1, y2, x):
 
 
 def is_visible_tile(x, y):
+    """Test if tile at coords is visible."""
     global my_map
     if x >= MAP_WIDTH or x < 0:
         return False
@@ -290,7 +280,7 @@ def is_visible_tile(x, y):
 
 
 def make_map():
-    """Make rooms on map."""
+    """Make rooms and tunnels and map, on map."""
     global my_map, objects
     objects = [player]
 
@@ -301,10 +291,10 @@ def make_map():
     rooms = []
     num_rooms = 0
 
-    for r in range(MAX_ROOMS):
+    for r in range(settings.max_rooms):
         # Random width, height, position inside map.
-        w = randint(ROOM_MIN_SIZE, ROOM_MAX_SIZE)
-        h = randint(ROOM_MIN_SIZE, ROOM_MAX_SIZE)
+        w = randint(settings.room_min_size, settings.room_max_size)
+        h = randint(settings.room_min_size, settings.room_max_size)
         x = randint(0, MAP_WIDTH-w-1)
         y = randint(0, MAP_HEIGHT-h-1)
         # Create room from rect class.
@@ -330,20 +320,22 @@ def make_map():
             else:
                 # Otherwise, connect with tunnels.
                 (prev_x, prev_y) = rooms[num_rooms-1].center()
+                # 50/50 whether we go vert-hori or hori-vert.
                 if randint(0, 1):
                     create_h_tunnel(prev_x, new_x, prev_y)
                     create_v_tunnel(prev_y, new_y, new_x)
                 else:
                     create_v_tunnel(prev_y, new_y, prev_x)
                     create_h_tunnel(prev_x, new_x, new_y)
+
             place_objects(new_room)
             rooms.append(new_room)
             num_rooms += 1
 
 
 def place_objects(room):
-    """Add Monsters/Items to room."""
-    num_monsters = randint(0, MAX_ROOM_MONSTERS)
+    """Add Monsters/Items to rooms."""
+    num_monsters = randint(0, settings.max_room_monsters)
     for i in range(num_monsters):
         x = randint(room.x1+1, room.x2-1)
         y = randint(room.y1+1, room.y2-1)
@@ -369,7 +361,7 @@ def place_objects(room):
                                      ai=ai_component)
             objects.append(monster)
 
-    num_items = randint(0, MAX_ROOM_ITEMS)
+    num_items = randint(0, settings.max_room_items)
     for i in range(num_items):
         x = randint(room.x1+1, room.x2-1)
         y = randint(room.y1+1, room.y2-1)
@@ -398,6 +390,7 @@ def place_objects(room):
 
 
 def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
+    """Draw GUI bar."""
     bar_width = int(float(value) / maximum * total_width)
     panel.draw_rect(x, y, total_width, 1, None, bg=back_color)
     if bar_width > 0:
@@ -408,6 +401,7 @@ def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 
 
 def get_names_under_mouse():
+    """Get name of objects under mouse."""
     global visible_tiles
     (x, y) = mouse_coord
     names = [obj.name for obj in objects
@@ -417,15 +411,16 @@ def get_names_under_mouse():
 
 
 def render_all():
+    """Render FOV, tiles and objects."""
     global fov_recompute
     global visible_tiles
     if fov_recompute:
         fov_recompute = False
         visible_tiles = tdl.map.quickFOV(player.x, player.y,
                                          is_visible_tile,
-                                         fov=FOV_ALGO,
-                                         radius=TORCH_RADIUS,
-                                         lightWalls=FOV_LIGHT_WALLS)
+                                         fov=settings.fov_algo,
+                                         radius=settings.torch_radius,
+                                         lightWalls=settings.fov_light_walls)
         for y in range(MAP_HEIGHT):
             for x in range(MAP_WIDTH):
                 visible = (x, y) in visible_tiles
@@ -479,6 +474,7 @@ def message(new_msg, color=colors.white):
 
 
 def player_move_or_attack(dx, dy):
+    """Move by dx or dy; if move into monster, attack."""
     global fov_recompute
     x = player.x + dx
     y = player.y + dy
@@ -496,6 +492,7 @@ def player_move_or_attack(dx, dy):
 
 
 def menu(header, options, width):
+    """Create and draw menu screen."""
     if len(options) > 26:
         raise ValueError("Menu cannot have more than 26 options.")
 
@@ -547,10 +544,12 @@ def inventory_menu(header):
 
 
 def msgbox(text, width=50):
+    """Use menu as message box."""
     menu(text, [], width)
 
 
 def handle_keys():
+    """Handle keys from user."""
     global playerx, playery
     global fov_recompute
     global mouse_coord
@@ -603,6 +602,7 @@ def handle_keys():
 
 
 def player_death(player):
+    """Death animation for player."""
     global game_state
     game_state = "dead"
     message("You died!", colors.darker_red)
@@ -612,6 +612,7 @@ def player_death(player):
 
 
 def monster_death(monster):
+    """Death animation for monster."""
     message("{} is dead!".format(monster.name.capitalize()), colors.azure)
     monster.char = "%"
     monster.fg = colors.dark_red
@@ -729,29 +730,32 @@ def cast_fireball():
             obj.fighter.take_damage(settings.fireball_damage)
 
 
-def cast_teleport(max_range=settings.teleport_range):
+def cast_teleport(max_range=settings.teleport_range, x=None, y=None):
     """Target tile; teleport to it."""
-    message("Left-click a tile to target it, or right-click to cancel.",
-            colors.light_cyan)
-    (x, y) = target_tile()
     if x is None:
-        message("Cancelled", colors.amber)
-        return "cancelled"
-    if player.distance(x, y) <= max_range:
-        message("With a zip and a zoom, you teleport to the tile.",
-                colors.blue)
+        message("Left-click a tile to target it, or right-click to cancel.",
+                colors.light_cyan)
+        (x, y) = target_tile()
+        if x is None:
+            message("Cancelled", colors.amber)
+            return "cancelled"
+        if player.distance(x, y) <= max_range:
+            message("With a zip and a zoom, you teleport to the tile.",
+                    colors.blue)
+            player.x = x
+            player.y = y
+        else:
+            message("Tile out of range; cancelled.", colors.blue)
+            return "cancelled"
+    else:
         player.x = x
         player.y = y
-    else:
-        message("Tile out of range; cancelled.", colors.blue)
-        return "cancelled"
 
 
 def cast_teleporthome():
     """Recall to spawn."""
     message("With a zip and a zoom, you teleport to spawn.", colors.blue)
-    player.x = player.spawnx
-    player.y = player.spawny
+    cast_teleport(x=player.spawnx, y=player.spawny)
 
 
 def save_game():
@@ -852,5 +856,5 @@ tdl.setFPS(LIMIT_FPS)
 con = tdl.Console(MAP_WIDTH, MAP_HEIGHT)
 panel = tdl.Console(SCREEN_WIDTH, PANEL_HEIGHT)
 
-# Start game.
+# Start game menu.
 main_menu()

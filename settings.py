@@ -1,7 +1,7 @@
 """Settings file for Umbrella Rogue.
 
-The main file pulls this through import and sets it at the beginning of the
-file.
+The main file pulls this through import and sets settings at the beginning
+of the file, or calling it when called.
 Having this in a seperate file allows for user/dev customisation. Also allows
 for less "boring blocks" of definitions at the start if the value is only used
 once.
