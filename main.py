@@ -760,7 +760,7 @@ def cast_teleporthome():
 
 def save_game():
     """Open an new empty shelf to write data."""
-    with shelve.open("savegame", "n") as savefile:
+    with shelve.open("savegame/savegame", "n") as savefile:
         savefile["my_map"] = my_map
         savefile["objects"] = objects
         savefile["player_index"] = objects.index(player)
@@ -772,7 +772,7 @@ def save_game():
 def load_game():
     global my_map, objects, player, game_msgs, game_state
 
-    with shelve.open("savegame", "r") as savefile:
+    with shelve.open("savegame/savegame", "r") as savefile:
         my_map = savefile["my_map"]
         objects = savefile["objects"]
         player = objects[savefile["player_index"]]
