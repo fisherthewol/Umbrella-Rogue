@@ -8,11 +8,9 @@ An attempt at a roguelike in python3.
 - g Grabs item you are stood on.  
 
 ## Known Bugs:  
-- Monsters attack around corners. This is a priority to fix.  
-- When casting recall, the player isn't drawn until a movement is given. I've already tried fixing this in a number of ways, I believe it has something to do with the way tdl works.  
+None right now.  
 
-## Projects:  
-- Fix above bugs.  
+## Projects:   
 - Implement new levels, both of map and of players/characters (Easily Done).  
 - Create new monsters for the levels.  
 - Abstract functions into files. This may be hard; at the moment it would result in circular imports, which would be shitty.  
