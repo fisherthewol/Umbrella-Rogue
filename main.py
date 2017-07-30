@@ -68,8 +68,6 @@ class GameObject:
                  fighter=None, ai=None, item=None):
         self.x = x
         self.y = y
-        self.spawnx = x
-        self.spawny = y
         self.char = char
         self.fg = fg
         self.bg = bg
@@ -733,6 +731,7 @@ def cast_fireball():
 
 def cast_teleport(max_range=settings.teleport_range, x=None, y=None):
     """Target tile; teleport to it."""
+    global fov_recompute
     if x is None:
         message("Left-click a tile to target it, or right-click to cancel.",
                 colors.light_cyan)
@@ -745,16 +744,20 @@ def cast_teleport(max_range=settings.teleport_range, x=None, y=None):
                     colors.blue)
             player.x = x
             player.y = y
+            fov_recompute = True
             player.draw()
             render_all()
+            tdl.flush()
         else:
             message("Tile out of range; cancelled.", colors.blue)
             return "cancelled"
     else:
         player.x = x
         player.y = y
+        fov_recompute = True
         player.draw()
         render_all()
+        tdl.flush()
 
 
 def cast_teleporthome():
