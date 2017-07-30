@@ -7,6 +7,7 @@ import textwrap
 import settings
 from tcod import image_load
 import shelve
+import time
 
 # GUI/Window settings.
 SCREEN_WIDTH = settings.screen_width
@@ -791,7 +792,7 @@ def new_game():
                         colors.white, None, blocks=True,
                         fighter=fighter_component)
 
-    # Generate map (not drawn)
+    # Generate map (not drawn).
     make_map()
     game_state = "playing"
 
@@ -842,7 +843,8 @@ def main_menu():
             try:
                 load_game()
             except:
-                msgbox("\nNo save game/file corruption.", 24)
+                msgbox("\nNo save game/file corruption.\n", 24)
+                time.sleep(4)
                 continue
             play_game()
         elif choice == 2:
