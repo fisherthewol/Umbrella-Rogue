@@ -745,12 +745,16 @@ def cast_teleport(max_range=settings.teleport_range, x=None, y=None):
                     colors.blue)
             player.x = x
             player.y = y
+            player.draw()
+            render_all()
         else:
             message("Tile out of range; cancelled.", colors.blue)
             return "cancelled"
     else:
         player.x = x
         player.y = y
+        player.draw()
+        render_all()
 
 
 def cast_teleporthome():
