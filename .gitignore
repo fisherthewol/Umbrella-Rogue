@@ -101,3 +101,9 @@ ENV/
 .mypy_cache/
 
 savegame/savegame
+
+savegame/savegame\.bak
+
+savegame/savegame\.dat
+
+savegame/savegame\.dir
