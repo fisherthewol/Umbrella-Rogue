@@ -8,7 +8,7 @@ An attempt at a roguelike in python3.
 - g Grabs item you are stood on.  
 
 ## Known Bugs:  
-None right now.  
+- Pressing d inside inventory opens drop inventory after use.  
 
 ## Projects:   
 - Implement new levels, both of map and of players/characters (Easily Done).  
